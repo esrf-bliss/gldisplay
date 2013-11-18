@@ -4,6 +4,7 @@ TEST		= ../test
 COMMON		= ../../../common
 CONTROL		= ../../../control
 HARDWARE	= ../../../hardware
+SPS		= ../../Sps
 PROCLIB		= ../../Processlib
 PROCLIBCORE	= $(PROCLIB)/core
 
@@ -23,14 +24,24 @@ IMGFLAGS	= $(CFLAGS) -I$(QTDIR)/include -DQT_THREAD_SUPPORT -O3
 IMGLDFLAGS	= -L$(QTDIR)/lib -lqt-mt -lGL
 
 LIMAFLAGS	= -I$(COMMON)/include -I$(CONTROL)/include \
-		  -I$(HARDWARE)/include -I$(PROCLIBCORE)/include
+		  -I$(HARDWARE)/include -I$(PROCLIBCORE)/include \
+		  -I$(SPS)/Include
 
 # targets
-all:			 GLDisplay.o $(TEST)/image_test
+all:				$(TEST)/image_test $(TEST)/gldisplay_test
 
-GLDisplay.o:	GLDisplay.cpp $(INCL)/GLDisplay.h
+GLDisplay.o:			GLDisplay.cpp $(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
- 
+
+# The GLDisplay library
+$(TEST)/gldisplay_test:		$(TEST)/gldisplay_test.o GLDisplay.o \
+				$(SPS)/Src/sps.o image.o
+	$(CXX) -o $@ $+ $(IMGLDFLAGS)
+
+$(TEST)/gldisplay_test.o:	$(TEST)/gldisplay_test.cpp \
+				$(INCL)/GLDisplay.h
+	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
+
 # The image library
 $(TEST)/image_test:		$(TEST)/image_test.o image.o 
 	$(CXX) -o $@ $+ $(IMGLDFLAGS)
@@ -54,4 +65,4 @@ moc_image.cpp:		$(INCL)/image.h
 
 # cleanup
 clean:
-	rm -f *.o moc_* $(TEST)/*.o $(TEST)/image_test
+	rm -f *.o moc_* $(TEST)/*.o $(TEST)/image_test $(TEST)/gldisplay_test

@@ -1,3 +1,4 @@
 *~
 *.o
 image_test
+gldisplay_test

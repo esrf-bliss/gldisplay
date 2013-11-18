@@ -1,5 +1,5 @@
 //###########################################################################
-// This file is part of ProcessLib, a submodule of LImA project the
+// This file is part of gldisplay, a submodule of LImA project the
 // Library for Image Acquisition
 //
 // Copyright (C) : 2009-2011
@@ -23,51 +23,80 @@
 #ifndef __GLDISPLAY_H__
 #define __GLDISPLAY_H__
 
-#include <sstream>
-#include "SinkTask.h"
-#include "imageapi.h"
-#include "Debug.h"
-#include "CtControl.h"
+#include <string>
+#include <vector>
+#include "image.h"
+#include "sps.h"
 
-using namespace lima;
 
-namespace Tasks
+class GLDisplay
 {
-
-class GLDisplay;
-
-class GLDisplayTask : public SinkTaskBase
-{
-	DEB_CLASS_NAMESPC(DebModControl, "GLDisplayTask", "Tasks");
  public:
-	GLDisplayTask(GLDisplay *display) : m_display(display) {}
-	GLDisplayTask(const GLDisplayTask& o) : m_display(o.m_display) {}
-
-	virtual void process(Data&);
-	
- private:
-	GLDisplay *m_display;
-};
-
-class DLL_EXPORT GLDisplay 
-{
-	DEB_CLASS_NAMESPC(DebModControl, "GLDisplay", "Tasks");
- public:
-	GLDisplay(CtControl *ct);
+	GLDisplay(int argc, char **argv);
 	~GLDisplay();
-	
-	void setActive(bool active, int run_level);
-	void prepare();
-	
- private:
-	friend class GLDisplayTask;
 
-	static bool image_inited;
-	image_t m_image;
-	CtControl *m_ct;
-	SoftOpInstance m_softopinst;
+	void createWindow(std::string caption);
+	bool isClosed();
+
+	void setBuffer(void *buffer_ptr, int width, int height, int depth);
+	void updateBuffer();
+
+	void refresh();
+
+ private:
+	ImageWindow *getImageWindow();
+	static void windowClosedCB(void *cb_data);
+
+	ImageWindow *m_image_window;
+	bool m_window_closed;
+
+	static ImageLib *m_image_lib;
 };
 
-}
+
+class SPSGLDisplay
+{
+ public:
+	SPSGLDisplay(int argc, char **argv);
+	~SPSGLDisplay();
+
+	void setSpecArray(std::string spec_name, std::string array_name);
+
+	void setCaption(std::string caption);
+	void createWindow();
+	void createForkedWindow(double refresh_time);
+	bool isClosed();
+
+	void refresh();
+
+ private:
+	bool checkSpecArray();
+	void releaseBuffer();
+
+	bool isForked();
+	void runChild();
+	bool checkParentAlive();
+
+	std::string m_spec_name;
+	std::string m_array_name;
+	void *m_buffer_ptr;
+	int m_width;
+	int m_height;
+	int m_depth;
+	GLDisplay *m_gldisplay;
+	std::string m_caption;
+
+	int m_parent_pid;
+	int m_child_pid;
+	bool m_child_ended;
+	double m_refresh_time;
+
+	static const double ParentCheckTime;
+
+	enum {
+		SPS_NrTypes = 11,
+	};
+	static const int SPS_TypeDepth[SPS_NrTypes];
+};
 
 #endif // __GLDISPLAY_H__
