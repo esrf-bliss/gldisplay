@@ -21,18 +21,22 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
 #include "GLDisplay.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <iostream>
+#include <string>
 
-char *prog_name = NULL;
+using namespace std;
+
+string prog_name;
 
 void usage()
 {
-	printf("Usage: %s [options] spec_name array_name\n", prog_name);
-	printf("\n");
-	printf("  Options:\n");
-	printf("      -f   Use forked GL display\n");
+	cout << "Usage: " << prog_name << " [options] spec_name array_name"
+	     << endl;
+	cout << endl;
+	cout << "  Options:" << endl;
+	cout << "      -f   Use forked GL display" << endl;
 
 	exit(1);
 }

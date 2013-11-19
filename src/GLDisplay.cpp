@@ -22,6 +22,8 @@
 //###########################################################################
 #include "GLDisplay.h"
 
+#include "image.h"
+
 #include <iostream>
 #include <sstream>
 #include <signal.h>
@@ -146,7 +148,9 @@ void SPSGLDisplay::createWindow()
 	m_gldisplay->createWindow(m_caption);
 }
 
-void SPSGLDisplay::createForkedWindow(double refresh_time)
+void SPSGLDisplay::createForkedWindow(double refresh_time,
+				      ForkCleanup *fork_cleanup,
+				      void *cleanup_data)
 {
 	m_refresh_time = refresh_time;
 	m_child_ended = false;
@@ -154,6 +158,8 @@ void SPSGLDisplay::createForkedWindow(double refresh_time)
 	if (m_child_pid == 0) {
 		m_parent_pid = getppid();
 		signal(SIGINT, SIG_IGN);
+		if (fork_cleanup)
+			fork_cleanup(cleanup_data);
 
 		m_gldisplay->createWindow(m_caption);
 		runChild();
@@ -186,7 +192,7 @@ bool SPSGLDisplay::checkParentAlive()
 	return (kill(m_parent_pid, 0) == 0);
 }
 
-bool SPSGLDisplay::isForked()
+bool SPSGLDisplay::isForkedParent()
 {
 	return (m_child_pid != 0);
 }
@@ -242,7 +248,7 @@ bool SPSGLDisplay::checkSpecArray()
 
 bool SPSGLDisplay::isClosed()
 {
-	if (!isForked())
+	if (!isForkedParent())
 		return m_gldisplay->isClosed();
 
 	if (!m_child_ended)
@@ -253,7 +259,7 @@ bool SPSGLDisplay::isClosed()
 
 void SPSGLDisplay::refresh()
 {
-	if (isForked())
+	if (isForkedParent())
 		return;
 
 	if (checkSpecArray())

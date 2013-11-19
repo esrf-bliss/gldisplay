@@ -25,9 +25,10 @@
 
 #include <string>
 #include <vector>
-#include "image.h"
 #include "sps.h"
 
+class ImageWindow;
+class ImageLib;
 
 class GLDisplay
 {
@@ -57,6 +58,8 @@ class GLDisplay
 class SPSGLDisplay
 {
  public:
+	typedef void ForkCleanup(void *cleanup_data);
+
 	SPSGLDisplay(int argc, char **argv);
 	~SPSGLDisplay();
 
@@ -64,7 +67,9 @@ class SPSGLDisplay
 
 	void setCaption(std::string caption);
 	void createWindow();
-	void createForkedWindow(double refresh_time);
+	void createForkedWindow(double refresh_time,
+				ForkCleanup *fork_cleanup = NULL,
+				void *cleanup_data = NULL);
 	bool isClosed();
 
 	void refresh();
@@ -73,7 +78,7 @@ class SPSGLDisplay
 	bool checkSpecArray();
 	void releaseBuffer();
 
-	bool isForked();
+	bool isForkedParent();
 	void runChild();
 	bool checkParentAlive();
 

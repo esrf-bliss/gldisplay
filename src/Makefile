@@ -23,12 +23,14 @@
 INCL		= ../include
 TEST		= ../test
 
-COMMON		= ../../../common
-CONTROL		= ../../../control
-HARDWARE	= ../../../hardware
-SPS		= ../../Sps
-PROCLIB		= ../../Processlib
+LIMA		= ../../..
+COMMON		= $(LIMA)/common
+CONTROL		= $(LIMA)/control
+HARDWARE	= $(LIMA)/hardware
+SPS		= $(LIMA)/third-party/Sps
+PROCLIB		= $(LIMA)/third-party/Processlib
 PROCLIBCORE	= $(PROCLIB)/core
+SIMU		= $(LIMA)/camera/simulator
 
 ifdef QTDIR3
 QTDIR		= $(QTDIR3)
@@ -47,21 +49,35 @@ IMGLDFLAGS	= -L$(QTDIR)/lib -lqt-mt -lGL
 
 LIMAFLAGS	= -I$(COMMON)/include -I$(CONTROL)/include \
 		  -I$(HARDWARE)/include -I$(PROCLIBCORE)/include \
-		  -I$(SPS)/Include
+		  -I$(SPS)/Include -I$(SIMU)/include -DWITH_SPS_IMAGE
+LIMALDFLAGS	= -L$(LIMA)/build -L$(PROCLIB)/build \
+		  -llimasimulator -llimacore -lprocesslib
+
+GLDISPLAY_OBJS	= GLDisplay.o $(SPS)/Src/sps.o image.o
+
+TEST_PROGS	= $(TEST)/image_test \
+		  $(TEST)/gldisplay_test \
+		  $(TEST)/simu_gldisplay_test
 
 # targets
-all:				$(TEST)/image_test $(TEST)/gldisplay_test
+all:				$(TEST_PROGS)
 
-GLDisplay.o:			GLDisplay.cpp $(INCL)/GLDisplay.h
+$(TEST)/simu_gldisplay_test:	$(TEST)/simu_gldisplay_test.o $(GLDISPLAY_OBJS)
+	$(CXX) -o $@ $+ $(IMGLDFLAGS) $(LIMALDFLAGS)
+
+$(TEST)/simu_gldisplay_test.o:	$(TEST)/simu_gldisplay_test.cpp \
+				$(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
-# The GLDisplay library
-$(TEST)/gldisplay_test:		$(TEST)/gldisplay_test.o GLDisplay.o \
-				$(SPS)/Src/sps.o image.o
+$(TEST)/gldisplay_test:		$(TEST)/gldisplay_test.o $(GLDISPLAY_OBJS)
 	$(CXX) -o $@ $+ $(IMGLDFLAGS)
 
 $(TEST)/gldisplay_test.o:	$(TEST)/gldisplay_test.cpp \
 				$(INCL)/GLDisplay.h
+	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
+
+# The GLDisplay library
+GLDisplay.o:			GLDisplay.cpp $(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
 # The image library
@@ -87,4 +103,4 @@ moc_image.cpp:		$(INCL)/image.h
 
 # cleanup
 clean:
-	rm -f *.o moc_* $(TEST)/*.o $(TEST)/image_test $(TEST)/gldisplay_test
+	rm -f *.o moc_* $(TEST)/*.o $(TEST_PROGS)
