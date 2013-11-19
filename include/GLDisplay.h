@@ -25,7 +25,6 @@
 
 #include <string>
 #include <vector>
-#include "sps.h"
 
 class ImageWindow;
 class ImageLib;
@@ -64,6 +63,7 @@ class SPSGLDisplay
 	~SPSGLDisplay();
 
 	void setSpecArray(std::string spec_name, std::string array_name);
+	void getSpecArray(std::string& spec_name, std::string& array_name);
 
 	void setCaption(std::string caption);
 	void createWindow();

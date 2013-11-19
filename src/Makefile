@@ -53,7 +53,7 @@ LIMAFLAGS	= -I$(COMMON)/include -I$(CONTROL)/include \
 LIMALDFLAGS	= -L$(LIMA)/build -L$(PROCLIB)/build \
 		  -llimasimulator -llimacore -lprocesslib
 
-GLDISPLAY_OBJS	= GLDisplay.o $(SPS)/Src/sps.o image.o
+GLDISPLAY_OBJS	= GLDisplay.o CtGLDisplay.o $(SPS)/Src/sps.o image.o
 
 TEST_PROGS	= $(TEST)/image_test \
 		  $(TEST)/gldisplay_test \
@@ -70,7 +70,7 @@ $(TEST)/simu_gldisplay_test.o:	$(TEST)/simu_gldisplay_test.cpp \
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
 $(TEST)/gldisplay_test:		$(TEST)/gldisplay_test.o $(GLDISPLAY_OBJS)
-	$(CXX) -o $@ $+ $(IMGLDFLAGS)
+	$(CXX) -o $@ $+ $(IMGLDFLAGS) $(LIMALDFLAGS)
 
 $(TEST)/gldisplay_test.o:	$(TEST)/gldisplay_test.cpp \
 				$(INCL)/GLDisplay.h
@@ -78,6 +78,10 @@ $(TEST)/gldisplay_test.o:	$(TEST)/gldisplay_test.cpp \
 
 # The GLDisplay library
 GLDisplay.o:			GLDisplay.cpp $(INCL)/GLDisplay.h
+	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
+
+CtGLDisplay.o:			CtGLDisplay.cpp $(INCL)/CtGLDisplay.h \
+				$(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
 # The image library

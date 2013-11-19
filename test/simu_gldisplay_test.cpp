@@ -21,13 +21,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
 #include "SimulatorInterface.h"
-#include "PoolThreadMgr.h"
 #include "CtControl.h"
 #include "CtAcquisition.h"
-#include "CtSpsImage.h"
 #include "MiscUtils.h"
 
-#include "GLDisplay.h"
+#include "CtGLDisplay.h"
 #include <iostream>
 
 using namespace lima;
@@ -49,11 +47,6 @@ double peak_angle_list[] = {
 };
 std::vector<double> peak_angles(C_LIST_ITERS(peak_angle_list));
 
-void fork_cleanup(void *data)
-{
-	PoolThreadMgr::get().setThreadWaitOnQuit(false);
-}
-
 int main(int argc, char *argv[])
 {
 	double exp_time = 0.1;
@@ -64,9 +57,6 @@ int main(int argc, char *argv[])
 	char *array_name = "Simulator";
 
 	argc--, argv++;
-	SPSGLDisplay sps_gl_display(argc, argv);
-	sps_gl_display.setSpecArray(spec_name, array_name);
-	sps_gl_display.createForkedWindow(refresh_time, fork_cleanup, NULL);
 
 	Simulator::Camera simu;
 	Simulator::FrameBuilder *fb = simu.getFrameBuilder();
@@ -75,34 +65,38 @@ int main(int argc, char *argv[])
 	fb->setRotationSpeed(360 / nb_frames);
 
 	Simulator::Interface simu_hw(simu);
-	CtControl *ct = new CtControl(&simu_hw);
-
-	CtAcquisition *ct_acq = ct->acquisition();
-	CtSpsImage *ct_display = ct->display();
+	CtControl *ct_control = new CtControl(&simu_hw);
+	CtAcquisition *ct_acq = ct_control->acquisition();
 
 	ct_acq->setAcqExpoTime(exp_time);
 	ct_acq->setAcqNbFrames(nb_frames);
-	ct_display->setNames(spec_name, array_name);
-	ct_display->setActive(true);
 
-	ct->prepareAcq();
-	ct->startAcq();
+	CtSPSGLDisplay *ct_gl_display = new CtSPSGLDisplay(ct_control, 
+							   argc, argv);
+	ct_gl_display->setSpecArray(spec_name, array_name);
+	ct_gl_display->createWindow();
 
-	while (!sps_gl_display.isClosed()) {
-		sps_gl_display.refresh();
+	ct_control->prepareAcq();
+	ct_control->startAcq();
+
+	while (!ct_gl_display->isClosed()) {
+		ct_gl_display->refresh();
 		Sleep(refresh_time);
 	}
 
 	CtControl::Status ct_status;
-	ct->getStatus(ct_status);
+	ct_control->getStatus(ct_status);
 
 	if (ct_status.AcquisitionStatus == AcqRunning) {
-		ct->stopAcq();
+		ct_control->stopAcq();
 		while (ct_status.AcquisitionStatus == AcqRunning) {
 			Sleep(refresh_time);
-			ct->getStatus(ct_status);
+			ct_control->getStatus(ct_status);
 		}
 	}
+
+	delete ct_gl_display;
+	delete ct_control;
 
 	return 0;
 }

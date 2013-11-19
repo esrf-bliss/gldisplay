@@ -23,6 +23,7 @@
 #include "GLDisplay.h"
 
 #include "image.h"
+#include "sps.h"
 
 #include <iostream>
 #include <sstream>
@@ -125,8 +126,12 @@ SPSGLDisplay::SPSGLDisplay(int argc, char **argv)
 
 SPSGLDisplay::~SPSGLDisplay()
 {
-	delete m_gldisplay;
-	releaseBuffer();
+	if (isForkedParent()) {
+		kill(m_child_ended, SIGTERM);
+	} else {
+		delete m_gldisplay;
+		releaseBuffer();
+	}
 }
 
 void SPSGLDisplay::setSpecArray(string spec_name, string array_name)
@@ -136,6 +141,12 @@ void SPSGLDisplay::setSpecArray(string spec_name, string array_name)
 	ostringstream os;
 	os << m_array_name << "@" << m_spec_name;
 	m_caption = os.str();
+}
+
+void SPSGLDisplay::getSpecArray(string& spec_name, string& array_name)
+{
+	spec_name = m_spec_name;
+	array_name = m_array_name;
 }
 
 void SPSGLDisplay::setCaption(string caption)
