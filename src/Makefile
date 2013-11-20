@@ -27,6 +27,7 @@ include ../src/Makefile.inc
 all:				$(GLDISPLAY_LIB)
 
 $(GLDISPLAY_LIB):		$(GLDISPLAY_OBJS)
+	mkdir -p $(BUILD)
 	$(CXX) -shared -o $@ $(GLDISPLAY_LIBLDFLAGS) $+
 	rm -f $(GLDISPLAY_LIBMINORLINK) $(GLDISPLAY_LIBLINK)
 	ln -s `basename $(GLDISPLAY_LIB)` $(GLDISPLAY_LIBMINORLINK)
@@ -57,4 +58,4 @@ $(SRC)/moc_image.cpp:		$(INCL)/image.h
 
 # cleanup
 clean:
-	rm -f $(SRC)/*.o $(SRC)/moc_* $(SRC)/libgldisplay.so*
+	rm -f $(SRC)/*.o $(SRC)/moc_* $(BUILD)/libgldisplay.so*
