@@ -23,38 +23,36 @@
 
 include ../src/Makefile.inc
 
+TEST_PROGS	= $(TEST)/image_test \
+		  $(TEST)/gldisplay_test \
+		  $(TEST)/simu_gldisplay_test
+
 # targets
-all:				$(GLDISPLAY_LIB)
+all:				$(TEST_PROGS)
 
-$(GLDISPLAY_LIB):		$(GLDISPLAY_OBJS)
-	$(CXX) -shared -o $@ $(GLDISPLAY_LIBLDFLAGS) $+
-	rm -f $(GLDISPLAY_LIBMINORLINK) $(GLDISPLAY_LIBLINK)
-	ln -s `basename $(GLDISPLAY_LIB)` $(GLDISPLAY_LIBMINORLINK)
-	ln -s `basename $(GLDISPLAY_LIBMINORLINK)` $(GLDISPLAY_LIBLINK)
+$(TEST)/simu_gldisplay_test:	$(TEST)/simu_gldisplay_test.o $(GLDISPLAY_LIB)
+	$(CXX) -o $@ $< $(IMGLDFLAGS) $(LIMALDFLAGS) $(GLDISPLAYLDFLAGS) \
+			$(LIMALDLIBS) $(SIMULDLIBS) $(GLDISPLAYLDLIBS)
 
-# The GLDisplay library
-$(SRC)/GLDisplay.o:		$(SRC)/GLDisplay.cpp $(INCL)/GLDisplay.h
+$(TEST)/simu_gldisplay_test.o:	$(TEST)/simu_gldisplay_test.cpp \
+				$(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
-$(SRC)/CtGLDisplay.o:		$(SRC)/CtGLDisplay.cpp $(INCL)/CtGLDisplay.h \
+$(TEST)/gldisplay_test:		$(TEST)/gldisplay_test.o $(GLDISPLAY_LIB)
+	$(CXX) -o $@ $< $(IMGLDFLAGS) $(LIMALDFLAGS) $(GLDISPLAYLDFLAGS) \
+			$(LIMALDLIBS) $(GLDISPLAYLDLIBS)
+
+$(TEST)/gldisplay_test.o:	$(TEST)/gldisplay_test.cpp \
 				$(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
 # The image library
-$(SRC)/image.o:			$(SRC)/image_aux.o $(SRC)/moc_image.o
-	$(LD) -r -o $@ $+
+$(TEST)/image_test:		$(TEST)/image_test.o $(SRC)/image.o 
+	$(CXX) -o $@ $+ $(IMGLDFLAGS)
 
-$(SRC)/image_aux.o:		$(SRC)/image.cpp $(INCL)/image.h \
-				$(INCL)/imageapi.h $(INCL)/autoobj.h \
-				$(INCL)/prectime.h
-	$(CXX) -c $(IMGFLAGS) -o $@ $<
-
-$(SRC)/moc_image.o:		$(SRC)/moc_image.cpp
-	$(CXX) -c $(IMGFLAGS) -o $@ $<
-
-$(SRC)/moc_image.cpp:		$(INCL)/image.h
-	$(MOC) $< -o $@
+$(TEST)/image_test.o:		$(TEST)/image_test.c $(INCL)/imageapi.h
+	$(CC) -c $(IMGFLAGS) -o $@ $<
 
 # cleanup
 clean:
-	rm -f $(SRC)/*.o $(SRC)/moc_* $(SRC)/libgldisplay.so*
+	rm -f $(TEST)/*.o $(TEST_PROGS)

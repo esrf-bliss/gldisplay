@@ -59,10 +59,10 @@ int main(int argc, char *argv[])
 	argc--, argv++;
 
 	Simulator::Camera simu;
-	Simulator::FrameBuilder *fb = simu.getFrameBuilder();
-	fb->setPeaks(peaks);
-	fb->setPeakAngles(peak_angles);
-	fb->setRotationSpeed(360 / nb_frames);
+	Simulator::FrameBuilder *simu_fb = simu.getFrameBuilder();
+	simu_fb->setPeaks(peaks);
+	simu_fb->setPeakAngles(peak_angles);
+	simu_fb->setRotationSpeed(360 / nb_frames);
 
 	Simulator::Interface simu_hw(simu);
 	CtControl *ct_control = new CtControl(&simu_hw);
