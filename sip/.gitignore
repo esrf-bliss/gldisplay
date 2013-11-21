@@ -1,0 +1,11 @@
+Makefile
+gldisplay.exp
+gldisplay.sbf
+gldisplay_tmp.sip
+gldisplayconfig.py
+sipAPIgldisplay.h
+sip*.cpp
+*.o
+*.so
+*.pyd
+*.pyd.manifest

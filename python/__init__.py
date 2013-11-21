@@ -20,30 +20,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
-.PHONY: src test clean
+from Lima import module_helper
 
-all:	src test
+mod_path = __path__
+depends_on = 'Core'
+has_dependent = False
 
-src:
-	make -C src -j2
+cleanup_data = module_helper.load_prepare(mod_path, depends_on, has_dependent)
 
-test:
-	make -C test -j2
+from Lima import Core
 
-config:	sip.clean sip/Makefile
-	
-sip:	sip/Makefile sip/gldisplay.so
+cleanup_data = module_helper.load_dep_cleanup(cleanup_data)
 
-sip/Makefile:
-	cd sip && python configure.py
+from Lima.GLDisplay.gldisplay import *
 
-sip/gldisplay.so:
-	$(MAKE) -C sip -j2
+module_helper.load_cleanup(cleanup_data)
 
-clean:	sip.clean
-	make -C src clean
-	make -C test clean
-
-sip.clean:
-	cd sip && python clean.py
+del mod_path, depends_on, has_dependent, cleanup_data
+del module_helper
 

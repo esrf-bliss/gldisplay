@@ -20,30 +20,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
-.PHONY: src test clean
+#!/usr/bin/env python
 
-all:	src test
+import os
+import os.path
+import platform
 
-src:
-	make -C src -j2
+if os.access('./Makefile',os.R_OK) :
+    os.system('make clean')
+dont_rm_files = ['gldisplay.sip','gldisplay_before_4_12.sip',
+		 'gldisplayconfig.py.in','gldisplay_init_numpy.cpp',
+		 'configure.py','clean.py','.gitignore']
 
-test:
-	make -C test -j2
-
-config:	sip.clean sip/Makefile
-	
-sip:	sip/Makefile sip/gldisplay.so
-
-sip/Makefile:
-	cd sip && python configure.py
-
-sip/gldisplay.so:
-	$(MAKE) -C sip -j2
-
-clean:	sip.clean
-	make -C src clean
-	make -C test clean
-
-sip.clean:
-	cd sip && python clean.py
-
+for root,dirs,files in os.walk('.') :
+    for file_name in files :
+        if file_name not in dont_rm_files :
+            os.remove(os.path.join(root,file_name))
+    break
