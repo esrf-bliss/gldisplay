@@ -37,10 +37,6 @@ PROCLIB		= $(LIMA)/third-party/Processlib
 PROCLIBCORE	= $(PROCLIB)/core
 SIMU		= $(LIMA)/camera/simulator
 
-ifdef QTDIR3
-QTDIR		= $(QTDIR3)
-endif
-
 ifndef QTDIR
 $(error QTDIR environment variable must be defined)
 endif
@@ -49,8 +45,18 @@ MOC             = $(QTDIR)/bin/moc
 
 CFLAGS		= -Wall -g -I$(INCL) -fPIC -pthread
 
-IMGFLAGS	= $(CFLAGS) -I$(QTDIR)/include -DQT_THREAD_SUPPORT -O3 
-IMGLDFLAGS	= -L$(QTDIR)/lib -lqt-mt -lGL
+QTDEFINES       = -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DQT_NO_DEBUG \
+		  -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED
+
+QTINCLD		= $(QTDIR)/include
+QTINCLS		= -I$(QTINCLD) -I$(QTINCLD)/QtCore -I$(QTINCLD)/QtGui \
+		  -I$(QTINCLD)/QtOpenGL
+QTFLAGS		= -m64 -pipe -g -O2 -Wall -W -D_REENTRANT \
+		   $(QTINCLS) $(QTDEFINES)
+QTLDFLAGS	= -m64 -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL
+
+IMGFLAGS	= $(CFLAGS) $(QTFLAGS)
+IMGLDFLAGS	= $(QTLDFLAGS)
 
 LIMAFLAGS	= -I$(COMMON)/include -I$(CONTROL)/include \
 		  -I$(HARDWARE)/include -I$(PROCLIBCORE)/include \

@@ -23,12 +23,12 @@
 #ifndef __IMAGE_H
 #define __IMAGE_H
 
-#include <qobject.h>
-#include <qmainwindow.h>
-#include <qapplication.h>
-#include <qwaitcondition.h>
-#include <qmutex.h>
-#include <qgl.h>
+#include <QObject>
+#include <QMainWindow>
+#include <QApplication>
+#include <QWaitCondition>
+#include <QMutex>
+#include <QtOpenGL>
 #include <X11/Xutil.h>
 #include <pthread.h>
 
@@ -169,8 +169,7 @@ public:
 		Unknown,
 	};
 
-	ImageWidget(QWidget *parent, const char *name = NULL, 
-	      ColormapType cmap = Grayscale);
+	ImageWidget(QWidget *parent = NULL, ColormapType cmap = Grayscale);
 	~ImageWidget();
 
 	int setBuffer(void *buffer, int width, int height, int depth,
@@ -227,13 +226,13 @@ private:
  * ImageEvent / SetBufferEvent / UpdateEvent
  ********************************************************************/
 
-class ImageEvent : public QCustomEvent
+class ImageEvent : public QEvent
 {
 public:
 	enum { SetBuffer = User + 1, Update };
 
 	ImageEvent(int type) : 
-		QCustomEvent(type) {}
+		QEvent(QEvent::Type(type)) {}
 };
 
 class SetBufferEvent : public ImageEvent
@@ -248,7 +247,11 @@ public:
 
 	SetBufferEvent(void *b, int w, int h, int d) :
 		ImageEvent(SetBuffer), buff_data(b, w, h, d) 
-	{	setData(&buff_data);	}
+	{}
+
+
+	BufferData *bufferData()
+	{	return &buff_data;	}
 
 private:
 	BufferData buff_data;
@@ -274,7 +277,7 @@ public:
 	static float DefaultMaxRefreshRate;
 
 public:
-	ImageWindow(const char *caption = NULL);
+	ImageWindow(QString caption);
 	~ImageWindow();
 
 	int setBuffer(void *buffer, int width, int height, int depth);
@@ -302,8 +305,9 @@ signals:
 	void closed();
 
 protected:
+	int startTimer(int msec);
 	void timerEvent(QTimerEvent *event);
-	void customEvent(QCustomEvent *event);
+	void customEvent(QEvent *event);
 
 	void realUpdate();
 	int realSetBuffer(void *buffer, int width, int height, 
@@ -314,6 +318,7 @@ protected:
 private:
 	ImageWidget *image;
 
+	int timer_id;
 	volatile bool relaxed;
 	Rate update_rate, refresh_rate, calc_rate, *max_refresh_rate;
 
@@ -334,12 +339,12 @@ class ImageApplication : public QApplication
 	Q_OBJECT
 
 public:
-	ImageApplication(Display *display, int argc, char **argv, 
-			 HANDLE visual = 0, HANDLE xcolormap = 0);
+	ImageApplication(Display *xdisplay, int& argc, char **argv,
+			 Qt::HANDLE visual = 0, Qt::HANDLE xcolormap = 0);
 	~ImageApplication();
 
-	static ImageApplication *createApplication(int argc = 0, 
-						   char **argv = NULL);
+	static ImageApplication *createApplication(int& argc,
+						   char **argv);
 	static void destroyApplication(ImageApplication *app);
 
 	ImageWindow *createImage(QString caption);
@@ -361,6 +366,7 @@ public:
 
 private:
 	ImageWidget::ColormapType colormap;
+	Display *display;
 };
 
 
@@ -380,7 +386,7 @@ public:
 	char **getArgv() const
 	{ return argv_ptr; }
 
-	int getArgc() const
+	int& getArgc()
 	{ return argv_count; }
 
 private:

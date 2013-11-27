@@ -22,6 +22,8 @@
 //###########################################################################
 #define GL_GLEXT_PROTOTYPES
 
+#include <QCloseEvent>
+#include <QX11Info>
 #include "image.h"
 #include "imageapi.h"
 #include <GL/glx.h>
@@ -48,9 +50,10 @@ void *ImageContext::chooseVisual()
 	if (env == "DirectColor")
 		visualclass = DirectColor;
 
+	// this should allocate XVisualInfo(s)
 	XVisualInfo *visual = (XVisualInfo *) QGLContext::chooseVisual();
 
-	Display *display = QPaintDevice::x11AppDisplay();
+	Display *display = QX11Info::display();
 	if (display == NULL)
 		return visual;
 
@@ -150,9 +153,8 @@ ImageWidget::ColormapType ImageWidget::colormapType(QString name)
 	return cmap;
 }
 
-ImageWidget::ImageWidget(QWidget *parent, const char *name, 
-	     ColormapType cmap)
-	: QGLWidget(parent, name, NULL)
+ImageWidget::ImageWidget(QWidget *parent, ColormapType cmap)
+	: QGLWidget(parent)
 {
 	ImageContext *context;
 	context = new ImageContext(QGLFormat(QGL::DoubleBuffer), this);
@@ -187,7 +189,7 @@ ImageWidget::ImageWidget(QWidget *parent, const char *name,
 ImageWidget::~ImageWidget()
 {
 	if (x11nrcolors > 0) {
-		XFreeColormap(x11Display(), x11colormap);
+		XFreeColormap(QX11Info::display(), x11colormap);
 		delete [] x11cmap;
 	}
 }
@@ -283,7 +285,7 @@ void ImageWidget::setPixelMapColormap(float map[][4], int size)
 
 int ImageWidget::checkX11Colormap(float map[][4], int size)
 {
-	Display *display = x11Display();
+	Display *display = QX11Info::display();
 	Window win = winId();
 	XWindowAttributes wa;
 	if (XGetWindowAttributes(display, win, &wa) == 0)
@@ -315,8 +317,8 @@ int ImageWidget::checkX11Colormap(float map[][4], int size)
 
 void ImageWidget::setX11Colormap(float map[][4], int size)
 {
-	Display *display = x11Display();
-	Visual *visual = (Visual *) x11Visual();
+	Display *display = QX11Info::display();
+	Visual *visual = (Visual *) x11Info().visual();
 	Window win = (Window) winId();
 
 	if (x11nrcolors > 0) {
@@ -593,8 +595,8 @@ void ImageWidget::setNorm(unsigned long minval, unsigned long maxval,
 
 float ImageWindow::DefaultMaxRefreshRate = 25;
 
-ImageWindow::ImageWindow(const char *caption) 
-	: QMainWindow(NULL, NULL, Qt::WDestructiveClose)
+ImageWindow::ImageWindow(QString caption)
+	: QMainWindow()
 {
 	relaxed = false;
 	calc_rate = 1.0;
@@ -609,9 +611,13 @@ ImageWindow::ImageWindow(const char *caption)
 	close_cb = NULL;
 	close_cb_data = NULL;
 
-	setCaption(caption ? caption : "Buffer");
+	if (caption.isEmpty())
+		caption = "Buffer";
+	setWindowTitle(caption);
 
-	image = new ImageWidget(this);
+	setAttribute(Qt::WA_DeleteOnClose);
+
+	image = new ImageWidget();
 	setCentralWidget(image);
 
 	startTimer(0);
@@ -703,9 +709,15 @@ void ImageWindow::setNorm(unsigned long minval, unsigned long maxval,
 	image->setNorm(minval, maxval, autorange);
 }
 
+int ImageWindow::startTimer(int msec)
+{
+	timer_id = QMainWindow::startTimer(msec);
+	return timer_id;
+}
+
 void ImageWindow::timerEvent(QTimerEvent *event)
 {
-	killTimers();
+	killTimer(timer_id);
 	if (!max_refresh_rate || max_refresh_rate->isTime()) {
 		relaxed = true;
 		return;
@@ -715,12 +727,11 @@ void ImageWindow::timerEvent(QTimerEvent *event)
 	startTimer(int(msec));
 }
 
-void ImageWindow::customEvent(QCustomEvent *event)
+void ImageWindow::customEvent(QEvent *event)
 { 
-	QCustomEvent *bevent = checkBufferEvent();
+	SetBufferEvent *bevent = checkBufferEvent();
 	if (bevent != NULL) {
-		SetBufferEvent::BufferData* buff_data;
-		buff_data = (SetBufferEvent::BufferData *) bevent->data();
+		SetBufferEvent::BufferData* buff_data = bevent->bufferData();
 		realSetBuffer(buff_data->buffer, buff_data->width, 
 			      buff_data->height, buff_data->depth);
 		delete bevent;
@@ -753,7 +764,7 @@ int ImageWindow::realSetBuffer(void *buffer, int width, int height,
  * ImageApplication
  ********************************************************************/
 
-ImageApplication *ImageApplication::createApplication(int argc, char **argv)
+ImageApplication *ImageApplication::createApplication(int& argc, char **argv)
 {
 	int visualclass = TrueColor;
 	char *disp_name = NULL;
@@ -793,20 +804,24 @@ ImageApplication *ImageApplication::createApplication(int argc, char **argv)
 	}
 
 	ImageApplication *app;
-	app = new ImageApplication(display, argc, argv, (HANDLE) visual);
+	app = new ImageApplication(display, argc, argv, (Qt::HANDLE) visual);
 
 	return app; 
 }
 
 void ImageApplication::destroyApplication(ImageApplication *app)
 {
+	Display *xdisplay = app->display;
 	delete app;
+	if (xdisplay)
+		XCloseDisplay(xdisplay);
 }
 
-ImageApplication::ImageApplication(Display *display, int argc, char **argv, 
-				   HANDLE visual, HANDLE xcolormap)
-	: QApplication(display, argc, argv, visual, xcolormap)
+ImageApplication::ImageApplication(Display *xdisplay, int& argc, char **argv,
+				   Qt::HANDLE visual, Qt::HANDLE xcolormap)
+	: QApplication(xdisplay, argc, argv, visual, xcolormap)
 {
+	display = xdisplay;
 	colormap = ImageWidget::Grayscale;
 	QString env = getenv("IMAGE_COLORMAP");
 	colormap = ImageWidget::colormapType(env);
@@ -963,7 +978,7 @@ ImageLib::~ImageLib()
 
 void ImageLib::createApplication()
 {
-	int argc = argv_copy->getArgc();
+	int& argc = argv_copy->getArgc();
 	char **argv = argv_copy->getArgv();
 	app = ImageApplication::createApplication(argc, argv);
 }
