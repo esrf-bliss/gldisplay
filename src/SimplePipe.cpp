@@ -26,6 +26,9 @@
 #include <iostream>
 #include <cmath>
 #include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 using namespace std;
 

@@ -65,7 +65,7 @@ def refresh_loop(ct_gl_display):
 		dt = time.time() - rates_refresh_t0
 		if dt > 1:
 			update, refresh = ct_gl_display.getRates()
-			print 'update: %.1f refresh: %.1f' % (update, refresh)
+			print 'update: %.1f, refresh: %.1f' % (update, refresh)
 			rates_refresh_t0 = time.time()
 
 def main(argv):

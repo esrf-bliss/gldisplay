@@ -52,7 +52,7 @@ After that you should have:
 
 Here follows the code that can be run using:
 
-  python test/simple_simu_gl_display_test.py
+  python test/simple_simu_gldisplay_test.py
 
 
 # Very simple program that starts the Simulator with the following:

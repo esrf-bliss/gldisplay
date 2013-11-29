@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 			float update, refresh;
 			ct_gl_display->getRates(&update, &refresh);
 			cout << fixed << setprecision(1)
-			     << "update: " << update << " "
+			     << "update: " << update << ", "
 			     << "refresh: " << refresh << endl;
 		}
 	}
