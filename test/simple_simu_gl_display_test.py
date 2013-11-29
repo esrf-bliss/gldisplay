@@ -18,42 +18,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <http:#www.gnu.org/licenses/>.
 ############################################################################
-
-INSTALLATION:
-
-Parts of GLDisplay use LIMA code, so LIMA should be built before GLDisplay.
-This is already handled if GLDisplay is compiled as an option of LIMA 
-(COMPILE_GLDISPLAY=1 in config.inc). In particular SPS (SPEC shared memory)
-must included in the build configuration options (COMPILE_SPS_IMAGE=1)
-
-The library uses Qt4/OpenGL, so the QTDIR environment variable must be defined.
-
-- To manually build library and test programs:
-
-  make
-
-- To manually build Python wrapping using SIP:
-
-  make sip
-
-After that you should have:
-
-  + build/:
-       libgldisplay.so (C++ library)
-  + sip/
-       gldisplay.so (SIP module)
-  + test/
-       *_test[.py]  (C++ & Python test programs)
-  + python/
-       __init__.py   (GLDisplay module initialisation code)
-
-
-Here follows the code that can be run using:
-
-  python test/simple_simu_gl_display_test.py
-
 
 # Very simple program that starts the Simulator with the following:
 #

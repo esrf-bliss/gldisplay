@@ -404,7 +404,7 @@ void ForkedSPSGLDisplay::runChild()
 	releaseBuffer();
 	delete m_gldisplay;
 
-	exit(0);
+	_exit(0);
 }
 
 bool ForkedSPSGLDisplay::checkParentAlive()
