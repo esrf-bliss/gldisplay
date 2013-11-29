@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
 	image_create(&img, "Test Image");
 	image_set_buffer(img, buffer, xsize, ysize, depth);
-	image_set_test(img);
+	image_set_test(img, 1);
 
 	end = 0;
 	image_close_cb(img, end_prog, &end);

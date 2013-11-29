@@ -29,8 +29,12 @@ using namespace std;
 
 #include "PoolThreadMgr.h"
 
+//-------------------------------------------------------------
+// CtGLDisplay
+//-------------------------------------------------------------
+
 CtGLDisplay::CtGLDisplay(CtControl *ct_control)
-	: m_ct_control(ct_control), m_refresh_time(10e-3)
+	: m_ct_control(ct_control)
 {
 }
 
@@ -38,21 +42,22 @@ CtGLDisplay::~CtGLDisplay()
 {
 }
 
-void CtGLDisplay::setRefreshTime(double refresh_time)
-{
-	m_refresh_time = refresh_time;
-}
+//-------------------------------------------------------------
+// CtSPSGLDisplay
+//-------------------------------------------------------------
 
-void CtGLDisplay::getRefreshTime(double& refresh_time)
-{
-	refresh_time = m_refresh_time;
-}
-
+const double CtSPSGLDisplay::DefaultRefreshTime = 10e-3;
 
 CtSPSGLDisplay::CtSPSGLDisplay(CtControl *ct_control, int argc, char **argv)
 	: CtGLDisplay(ct_control)
 {
-	m_sps_gl_display = new SPSGLDisplay(argc, argv);
+	m_use_forked = true;
+	if (m_use_forked) {
+		ForkedSPSGLDisplay *gl_display;
+		gl_display = new ForkedSPSGLDisplay(argc, argv);
+		gl_display->setForkCleanup(processlibForkCleanup, NULL);
+		m_sps_gl_display = gl_display;
+	}
 }
 
 CtSPSGLDisplay::~CtSPSGLDisplay()
@@ -69,9 +74,9 @@ void CtSPSGLDisplay::closeWindow()
 
 void CtSPSGLDisplay::createWindow()
 {
-	m_sps_gl_display->createForkedWindow(m_refresh_time, 
-						     processlibForkCleanup, 
-						     NULL);
+	m_sps_gl_display->createWindow();
+	if (m_use_forked)
+		setRefreshTime(DefaultRefreshTime);
 }
 
 bool CtSPSGLDisplay::isClosed()
@@ -84,7 +89,13 @@ void CtSPSGLDisplay::refresh()
 	return m_sps_gl_display->refresh();
 }
 
-void CtSPSGLDisplay::processlibForkCleanup(void *data)
+void CtSPSGLDisplay::setTestImage(bool active)
+{
+	return m_sps_gl_display->setTestImage(active);
+}
+
+
+void CtSPSGLDisplay::processlibForkCleanup(void *)
 {
 	PoolThreadMgr::get().setThreadWaitOnQuit(false);
 }
@@ -100,4 +111,31 @@ void CtSPSGLDisplay::setSpecArray(string spec_name, string array_name)
 void CtSPSGLDisplay::getSpecArray(string& spec_name, string& array_name)
 {
 	m_sps_gl_display->getSpecArray(spec_name, array_name);
+}
+
+void CtSPSGLDisplay::setRefreshTime(float refresh_time)
+{
+	typedef ForkedSPSGLDisplay ForkedKlass;
+	ForkedKlass *gl_display;
+	if (m_use_forked) {
+		gl_display = reinterpret_cast<ForkedKlass *>(m_sps_gl_display);
+		gl_display->setRefreshTime(refresh_time);
+	}
+}
+
+void CtSPSGLDisplay::getRates(float *update, float *refresh)
+{
+	m_sps_gl_display->getRates(update, refresh);
+}
+
+void CtSPSGLDisplay::getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange)
+{
+	m_sps_gl_display->getNorm(minval, maxval, autorange);
+}
+
+void CtSPSGLDisplay::setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange)
+{
+	m_sps_gl_display->setNorm(minval, maxval, autorange);
 }

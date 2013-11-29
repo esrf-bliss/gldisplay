@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include "SimplePipe.h"
+
 class ImageWindow;
 class ImageLib;
 
@@ -41,7 +43,17 @@ class GLDisplay
 	void setBuffer(void *buffer_ptr, int width, int height, int depth);
 	void updateBuffer();
 
+	void setTestImage(bool active);
+
 	void refresh();
+
+	void getRates(float *update, float *refresh);
+	void getNorm(unsigned long *minval, unsigned long *maxval,
+		     int *autorange);
+	void setNorm(unsigned long minval, unsigned long maxval,
+		     int autorange);
+
+	static void Sleep(float sleep_time);
 
  private:
 	ImageWindow *getImageWindow();
@@ -54,33 +66,33 @@ class GLDisplay
 };
 
 
-class SPSGLDisplay
+class SPSGLDisplayBase
 {
  public:
-	typedef void ForkCleanup(void *cleanup_data);
-
-	SPSGLDisplay(int argc, char **argv);
-	~SPSGLDisplay();
+	SPSGLDisplayBase(int argc, char **argv);
+	virtual ~SPSGLDisplayBase();
 
 	void setSpecArray(std::string spec_name, std::string array_name);
 	void getSpecArray(std::string& spec_name, std::string& array_name);
 
 	void setCaption(std::string caption);
-	void createWindow();
-	void createForkedWindow(double refresh_time,
-				ForkCleanup *fork_cleanup = NULL,
-				void *cleanup_data = NULL);
-	bool isClosed();
 
-	void refresh();
+	virtual void createWindow() = 0;
+	virtual bool isClosed() = 0;
 
- private:
+	virtual void setTestImage(bool active) = 0;
+
+	virtual void refresh() = 0;
+
+	virtual void getRates(float *update, float *refresh) = 0;
+	virtual void getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange) = 0;
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange) = 0;
+
+ protected:
 	bool checkSpecArray();
 	void releaseBuffer();
-
-	bool isForkedParent();
-	void runChild();
-	bool checkParentAlive();
 
 	std::string m_spec_name;
 	std::string m_array_name;
@@ -91,17 +103,88 @@ class SPSGLDisplay
 	GLDisplay *m_gldisplay;
 	std::string m_caption;
 
-	int m_parent_pid;
-	int m_child_pid;
-	bool m_child_ended;
-	double m_refresh_time;
-
-	static const double ParentCheckTime;
-
 	enum {
 		SPS_NrTypes = 11,
 	};
 	static const int SPS_TypeDepth[SPS_NrTypes];
+};
+
+class LocalSPSGLDisplay : public SPSGLDisplayBase
+{
+ public:
+	LocalSPSGLDisplay(int argc, char **argv);
+	virtual ~LocalSPSGLDisplay();
+
+	virtual void createWindow();
+	virtual bool isClosed();
+
+	virtual void setTestImage(bool active);
+
+	virtual void refresh();
+
+	virtual void getRates(float *update, float *refresh);
+	virtual void getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
+
+ private:
+};
+
+class ForkedSPSGLDisplay : public SPSGLDisplayBase
+{
+ public:
+	typedef void ForkCleanup(void *cleanup_data);
+
+	ForkedSPSGLDisplay(int argc, char **argv);
+	virtual ~ForkedSPSGLDisplay();
+
+	virtual void createWindow();
+	virtual bool isClosed();
+
+	virtual void setTestImage(bool active);
+
+	virtual void refresh();
+
+	virtual void getRates(float *update, float *refresh);
+	virtual void getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
+
+	void setRefreshTime(float refresh_time);
+
+	void setForkCleanup(ForkCleanup *fork_cleanup, void *cleanup_data);
+
+ private:
+	void runChild();
+	bool checkParentAlive();
+
+	std::string sendChildCmd(std::string cmd);
+	std::string checkParentCmd();
+	bool processParentCmd(std::string cmd_str);
+
+	int m_parent_pid;
+	int m_child_pid;
+	Pipe *m_cmd_pipe;
+	Pipe *m_res_pipe;
+	bool m_child_ended;
+	float m_refresh_time;
+	ForkCleanup *m_fork_cleanup;
+	void *m_cleanup_data;
+
+	static const float ParentCheckTime;
+
+	enum {
+		CmdQuit,
+		CmdTestImage,
+		CmdGetRates,
+		CmdGetNorm,
+		CmdSetNorm,
+		CmdSetRefreshTime,
+		NrCmd,
+	};
+	static const std::string CmdList[NrCmd];
 };
 
 #endif // __GLDISPLAY_H__

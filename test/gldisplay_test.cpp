@@ -46,7 +46,9 @@ int main(int argc, char *argv[])
 	prog_name = argv[0];
 	argc--, argv++;
 
-	SPSGLDisplay sps_gl_display(argc, argv);
+	SPSGLDisplayBase *sps_gl_display = NULL;
+	ForkedSPSGLDisplay *forked_sps_gl_display = NULL;
+	LocalSPSGLDisplay *local_sps_gl_display = NULL;
 
 	// search options
 	double refresh_time = 0.01;
@@ -63,16 +65,24 @@ int main(int argc, char *argv[])
 	char *array_name = *argv++;
 	argc -= 2;
 
-	sps_gl_display.setSpecArray(spec_name, array_name);
-	if (use_fork)
-		sps_gl_display.createForkedWindow(refresh_time);
-	else
-		sps_gl_display.createWindow();
+	if (use_fork) {
+		forked_sps_gl_display = new ForkedSPSGLDisplay(argc, argv);
+		forked_sps_gl_display->setRefreshTime(refresh_time);
+		sps_gl_display = forked_sps_gl_display;
+	} else {
+		local_sps_gl_display = new LocalSPSGLDisplay(argc, argv);
+		sps_gl_display = local_sps_gl_display;
+	}
 
-	while (!sps_gl_display.isClosed()) {
-		sps_gl_display.refresh();
+	sps_gl_display->setSpecArray(spec_name, array_name);
+	sps_gl_display->createWindow();
+
+	while (!sps_gl_display->isClosed()) {
+		sps_gl_display->refresh();
 		usleep(int(refresh_time * 1e6 + 0.1));
 	}
+
+	delete sps_gl_display;
 
 	return 0;
 }

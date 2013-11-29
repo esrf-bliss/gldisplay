@@ -132,7 +132,7 @@ public:
 
 	void setBuffer(void *ptr, unsigned width, unsigned height, 
 		       unsigned depth);
-	void setTestImage();
+	void setTestImage(bool active);
 
 	unsigned maxVal()
 	{ return (1ULL << (8 * buff.depth())) - 1; }
@@ -145,6 +145,10 @@ public:
 	{ return h; }
 	unsigned nrPixels()
 	{ return w * h; }
+	unsigned depth()
+	{ return buff.depth(); }
+	unsigned size()
+	{ return nrPixels() * depth(); }
 
 	static int debug;
 
@@ -179,7 +183,7 @@ public:
 	static ColormapType colormapType(QString name);
 
 public slots:
-	void setTestImage();
+	void setTestImage(bool test_active);
 	void setColormap(ColormapType cmap);
 	void updateImage(bool force_norm = false);
 	void normalize(bool force = false); 
@@ -194,6 +198,8 @@ protected:
 	void paintGL();
 
 	void calcResize();
+	void reallocTestImage();
+	Image& getActiveImage();
 
 	int  checkColorTableColormap(float map[][4], int size);
 	void setColorTableColormap(float map[][4], int size);
@@ -202,8 +208,9 @@ protected:
 	void setX11Colormap(float map[][4], int size);
 
 private:
-	Image image;
-	GLboolean testimage;
+	Image realimage;
+	Image testimage;
+	GLboolean test_active;
 	GLenum b_type;
 	GLsizei w_width, w_height;
 	GLint x, y;
@@ -355,7 +362,7 @@ public:
 			    ImageWindow::closeCB cb, void *data);
 
 	void updateImage(ImageWindow *win, bool just_update);
-	void setTestImage(ImageWindow *win);
+	void setTestImage(ImageWindow *win, bool test_active);
 	int poll();
 
 	void getImageRates(ImageWindow *win, float *update, float *refresh);
@@ -416,7 +423,7 @@ public:
 
 	int setImageBuffer(ImageWindow *win, void *buffer, 
 			   int width, int height, int depth);
-	void setTestImage(ImageWindow *win);
+	void setTestImage(ImageWindow *win, int test_active);
 	int setImageCloseCB(ImageWindow *win,
 			    ImageWindow::closeCB cb, void *data);
 	void updateImage(ImageWindow *win);

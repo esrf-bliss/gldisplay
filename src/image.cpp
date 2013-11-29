@@ -112,16 +112,16 @@ void Image::setBuffer(void *ptr, unsigned width, unsigned height,
 	h = height;
 }
 
-
-void Image::setTestImage()
+void Image::setTestImage(bool active)
 {
 	ImagePixelPtr p = buff;
 	
 	for (unsigned int i = 0; i < h; ++i) {
 		for (unsigned int j = 0; j < w; ++j) {
-			unsigned val;
-			val = (i + j) * maxVal() / (w + h);
-			p.store(val);
+			float val = 0;
+			if (active)
+				val = float(i + j) * maxVal() / (w + h);
+			p.store(unsigned(val));
 			++p;
 		}
 	}
@@ -180,10 +180,10 @@ ImageWidget::ImageWidget(QWidget *parent, ColormapType cmap)
 
 	x11nrcolors = 0;
 
-	testimage = 0;
+	test_active = 0;
 	env = getenv("IMAGE_TEST_PATTERN");
 	if ((env == "1") || (env == "Yes"))
-		testimage = 1;
+		test_active = 1;
 }
 
 ImageWidget::~ImageWidget()
@@ -192,6 +192,7 @@ ImageWidget::~ImageWidget()
 		XFreeColormap(QX11Info::display(), x11colormap);
 		delete [] x11cmap;
 	}
+	free(testimage.ptr().vPtr());
 }
 
 void ImageWidget::setColormap(ColormapType cmap)
@@ -422,6 +423,7 @@ void ImageWidget::calcResize()
 	glOrtho(0, w_width, 0, w_height, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	
+	Image& image = getActiveImage();
 	if (!image.isValid())
 		return;
 
@@ -446,6 +448,7 @@ void ImageWidget::paintGL()
 {
         glClear(GL_COLOR_BUFFER_BIT);
 
+	Image& image = getActiveImage();
 	if (image.isValid()) {
 		if (must_resize)
 			calcResize();
@@ -465,6 +468,16 @@ void ImageWidget::paintGL()
 int ImageWidget::setBuffer(void *ptr, int width, int height, int depth,
 			   bool do_update)
 {
+	if (!ptr && !width && !height && !depth) {
+		if (realimage.isValid()) {
+			realimage.setBuffer(NULL, 0, 0, 0);
+			reallocTestImage();
+			if (w_width && w_height)
+				updateImage(false);
+		}
+		return 0;
+	}
+
 	if (!ptr || !width || !height)
 		return -1;
 
@@ -476,13 +489,13 @@ int ImageWidget::setBuffer(void *ptr, int width, int height, int depth,
 		return -1;
 	}
 
-	bool first_time = !image.isValid();
-	bool size_changed = ((width  != int(image.width())) || 
-			     (height != int(image.height())));
+	bool first_time = !realimage.isValid();
+	bool size_changed = ((width  != int(realimage.width())) || 
+			     (height != int(realimage.height())));
 
-	image.setBuffer(ptr, width, height, depth);
-	if (testimage)
-		image.setTestImage();
+	realimage.setBuffer(ptr, width, height, depth);
+	if (test_active && (first_time || size_changed))
+		reallocTestImage();
 
 	if (!w_width || !w_height) {
 		if (Image::debug) 
@@ -499,6 +512,21 @@ int ImageWidget::setBuffer(void *ptr, int width, int height, int depth,
 	return 0;
 }
 
+void ImageWidget::reallocTestImage()
+{
+	free(testimage.ptr().vPtr());
+	testimage.setBuffer(NULL, 0, 0, 0);
+	if (!realimage.isValid())
+		return;
+
+	void *test_buffer = malloc(realimage.size());
+	if (!test_buffer)
+		throw exception();
+	testimage.setBuffer(test_buffer, realimage.width(), 
+			    realimage.height(), realimage.depth());
+	testimage.setTestImage(test_active);
+}
+
 void ImageWidget::updateImage(bool force_norm)
 {
 	if (force_norm)
@@ -506,9 +534,14 @@ void ImageWidget::updateImage(bool force_norm)
 	updateGL();
 }
 
+Image& ImageWidget::getActiveImage()
+{
+	return *(test_active ? &testimage : &realimage);
+}
 
 void ImageWidget::normalize(bool force)
 {
+	Image& image = getActiveImage();
 	ImagePixelPtr ptr = image.ptr();
 	int i, len = image.nrPixels();
 
@@ -559,12 +592,13 @@ void ImageWidget::normalize(bool force)
 
 }
 
-void ImageWidget::setTestImage()
+void ImageWidget::setTestImage(bool active)
 {
-	testimage = 1;
-	if (image.isValid()) {
-		image.setTestImage();
-		updateImage();
+	bool was_active = test_active;
+	test_active = active;
+	if (realimage.isValid() && (active != was_active)) {
+		reallocTestImage();
+		updateImage(true);
 	}
 }
 
@@ -901,9 +935,9 @@ void ImageApplication::setImageNorm(ImageWindow *win, unsigned long minval,
 	win->setNorm(minval, maxval, autorange);
 }
 
-void ImageApplication::setTestImage(ImageWindow *win)
+void ImageApplication::setTestImage(ImageWindow *win, bool active)
 {
-	win->imageWidget()->setTestImage();
+	win->imageWidget()->setTestImage(active);
 }
 
 
@@ -1092,10 +1126,10 @@ int ImageLib::setImageBuffer(ImageWindow *win, void *buffer,
 	return 0;
 }
 
-void ImageLib::setTestImage(ImageWindow *win)
+void ImageLib::setTestImage(ImageWindow *win, int active)
 {
 	Lock lock = getLock();
-	app->setTestImage(win);
+	app->setTestImage(win, active);
 }
 
 int ImageLib::setImageCloseCB(ImageWindow *win,
@@ -1196,9 +1230,9 @@ int image_set_buffer(image_t img, void *buffer, int width, int height,
 				       width, height, depth);
 }
 
-int image_set_test(image_t img)
+int image_set_test(image_t img, int active)
 {
-	img_lib->setTestImage(imageWindow(img));
+	img_lib->setTestImage(imageWindow(img), active);
 	return 0;
 }
 

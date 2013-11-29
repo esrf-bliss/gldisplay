@@ -32,27 +32,30 @@ namespace lima
 class CtGLDisplay
 {
  public:
-	CtGLDisplay(CtControl *ct_control); 
+	CtGLDisplay(CtControl *ct_control);
 	virtual ~CtGLDisplay();
-
-	virtual void setRefreshTime(double refresh_time);
-	virtual void getRefreshTime(double& refresh_time);
 
 	virtual void createWindow() = 0;
 	virtual bool isClosed() = 0;
 	virtual void closeWindow() = 0;
 	virtual void refresh() = 0;
+	virtual void setTestImage(bool active) = 0;
+
+	virtual void getRates(float *update, float *refresh) = 0;
+	virtual void getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange) = 0;
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange) = 0;
 
  protected:
 	CtControl *m_ct_control;
-	double m_refresh_time;
 };
 
 
 class CtSPSGLDisplay : public CtGLDisplay
 {
  public:
-	CtSPSGLDisplay(CtControl *ct_control, 
+	CtSPSGLDisplay(CtControl *ct_control,
 		       int argc = 0, char **argv = NULL);
 	virtual ~CtSPSGLDisplay();
 
@@ -63,11 +66,23 @@ class CtSPSGLDisplay : public CtGLDisplay
 	virtual bool isClosed();
 	virtual void closeWindow();
 	virtual void refresh();
+	virtual void setTestImage(bool active);
+
+	void setRefreshTime(float refresh_time);
+
+	virtual void getRates(float *update, float *refresh);
+	virtual void getNorm(unsigned long *minval, unsigned long *maxval,
+			     int *autorange);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
 
  private:
+	static const double DefaultRefreshTime;
+
 	static void processlibForkCleanup(void *data);
 
-	SPSGLDisplay *m_sps_gl_display;
+	SPSGLDisplayBase *m_sps_gl_display;
+	bool m_use_forked;
 };
 
 } // namespace lima
