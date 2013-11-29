@@ -429,12 +429,13 @@ string ForkedSPSGLDisplay::sendChildCmd(string cmd)
 	debug << "Replied: " << ans;
 	int sep_spc = (ans.size() > 3) ? 1 : 0;
 	string ok_str = string("OK") + (sep_spc ? " " : "");
-	if (ans.substr(0, 2 + sep_spc) != ok_str) {
+	int ok_len = ok_str.size();
+	if (ans.substr(0, ok_len) != ok_str) {
 		cerr << "Invalid ans: '" << ans << "'" << endl;
 		throw exception();
 	}
 
-	return ans.substr(2 + sep_spc, ans.size() - 3 - sep_spc);
+	return ans.substr(ok_len, ans.size() - (ok_len + 1));
 }
 
 string ForkedSPSGLDisplay::checkParentCmd()

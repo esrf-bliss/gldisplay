@@ -26,13 +26,10 @@
 #include "GLDisplay.h"
 #include "CtControl.h"
 
-namespace lima
-{
-
 class CtGLDisplay
 {
  public:
-	CtGLDisplay(CtControl *ct_control);
+	CtGLDisplay(lima::CtControl *ct_control);
 	virtual ~CtGLDisplay();
 
 	virtual void createWindow() = 0;
@@ -48,14 +45,14 @@ class CtGLDisplay
 			     int autorange) = 0;
 
  protected:
-	CtControl *m_ct_control;
+	lima::CtControl *m_ct_control;
 };
 
 
 class CtSPSGLDisplay : public CtGLDisplay
 {
  public:
-	CtSPSGLDisplay(CtControl *ct_control,
+	CtSPSGLDisplay(lima::CtControl *ct_control,
 		       int argc = 0, char **argv = NULL);
 	virtual ~CtSPSGLDisplay();
 
@@ -84,7 +81,5 @@ class CtSPSGLDisplay : public CtGLDisplay
 	SPSGLDisplayBase *m_sps_gl_display;
 	bool m_use_forked;
 };
-
-} // namespace lima
 
 #endif // __CTGLDISPLAY_H__

@@ -88,14 +88,16 @@ makefile = sipconfig.ModuleMakefile(
 
 LIMA = os.path.join('..', '..' , '..')
 PROCESSLIB = os.path.join(LIMA, 'third-party', 'Processlib')
-QTDIR = os.environ.get('QTDIR3', os.environ.get('QTDIR'))
+QTDIR = os.environ.get('QTDIR')
 
 makefile.extra_include_dirs = [os.path.join('..', 'include'),
 			       os.path.join(LIMA, 'common', 'include'),
+			       os.path.join(LIMA, 'hardware', 'include'),
+			       os.path.join(LIMA, 'control', 'include'),
 			       os.path.join(PROCESSLIB, 'core', 'include')]
 makefile.extra_cxxflags = ['-pthread', '-I' + numpy.get_include(), '-g']
 makefile.extra_libs = ['pthread', 'gldisplay', 'limacore', 'processlib',
-		       'qt-mt', 'GL']
+		       'QtCore', 'QtGui', 'QtOpenGL', 'GL']
 makefile.extra_lib_dirs = [os.path.join('..', 'build'), 
 			   os.path.join(LIMA, 'build'),
 			   os.path.join(PROCESSLIB, 'build'),

@@ -26,24 +26,46 @@
 
 extern "C" { void gldisplay_import_array();}
 
-#define PYLIST_2_ARGC_ARGV_HEAD(a0, argc, argv, ok) \
-	int argc = PyList_Size(a0); \
+#define PYLIST_2_ARGC_ARGV_HEAD(ai, argc, argv, ok) \
+	int argc = PyList_Size(ai); \
 	char **argv = NULL; \
 	ok = true; \
 	if (argc > 0) { \
 		argv = new char*[argc]; \
 		for (int i = 0; (i < argc) && ok; ++i) { \
-			PyObject *s = PyList_GET_ITEM(a0, i); \
+			PyObject *s = PyList_GET_ITEM(ai, i); \
 			ok = PyString_Check(s); \
 			if (ok) \
 				argv[i] = PyString_AsString(s); \
 			else \
-				sipBadCallableArg(0, a0); \
+				sipBadCallableArg(0, ai); \
 		} \
 	}
 
 #define PYLIST_2_ARGC_ARGV_TAIL(argv) \
 	delete [] argv;
+
+#define GLDISPLAY_CONSTRUCTOR_ARGC_ARGV(ai, glklass, glklass_args) \
+	bool ok; \
+	PYLIST_2_ARGC_ARGV_HEAD(ai, argc, argv, ok) \
+        if (ok) { \
+		Py_BEGIN_ALLOW_THREADS \
+		try { \
+			sipCpp = new glklass glklass_args; \
+		} catch (...) { \
+			Py_BLOCK_THREADS \
+			PYLIST_2_ARGC_ARGV_TAIL(argv) \
+			throw; \
+		} \
+		Py_END_ALLOW_THREADS \
+        } \
+	PYLIST_2_ARGC_ARGV_TAIL(argv)
+
+#define GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A0(glklass) \
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV(a0, glklass, (argc,argv) )
+
+#define GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A1(glklass) \
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV(a1, glklass, (a0,argc,argv) )
 
 %End
 
@@ -60,19 +82,7 @@ class GLDisplay
  public:
 	GLDisplay(SIP_PYLIST)[(int argc, char **argv)];
 %MethodCode
-	bool ok;
-	PYLIST_2_ARGC_ARGV_HEAD(a0, argc, argv, ok)
-        if (ok) {
-		Py_BEGIN_ALLOW_THREADS
-		try {
-			sipCpp = new GLDisplay(argc, argv);
-		} catch (...) {
-			PYLIST_2_ARGC_ARGV_TAIL(argv)
-			throw;
-		}
-		Py_END_ALLOW_THREADS
-        }
-	PYLIST_2_ARGC_ARGV_TAIL(argv)
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A0(GLDisplay)
 %End
 
 	~GLDisplay();
@@ -80,10 +90,207 @@ class GLDisplay
 	void createWindow(std::string caption);
 	bool isClosed();
 
-	void setBuffer(void *buffer_ptr, int width, int height, int depth);
+	void setBuffer(char *buffer_ptr /KeepReference/,
+		       int width, int height, int depth);
 	void updateBuffer();
 
+	void setTestImage(bool active);
+
 	void refresh();
+
+	void getRates(float *update /Out/, float *refresh /Out/);
+	void getNorm(unsigned long *minval /Out/, unsigned long *maxval /Out/,
+		     int *autorange /Out/);
+	void setNorm(unsigned long minval, unsigned long maxval,
+		     int autorange);
+};
+
+
+class SPSGLDisplayBase
+{
+%TypeHeaderCode
+#include <GLDisplay.h>
+%End
+
+ public:
+	SPSGLDisplayBase(SIP_PYLIST)[(int argc, char **argv)];
+%MethodCode
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A0(sipSPSGLDisplayBase)
+%End
+	virtual ~SPSGLDisplayBase();
+
+	void setSpecArray(std::string spec_name, std::string array_name);
+	void getSpecArray(std::string& spec_name /Out/,
+			  std::string& array_name /Out/);
+
+	void setCaption(std::string caption);
+
+	virtual void createWindow() = 0;
+	virtual bool isClosed() = 0;
+
+	virtual void setTestImage(bool active) = 0;
+
+	virtual void refresh() = 0;
+
+	virtual void getRates(float *update /Out/, float *refresh /Out/) = 0;
+	virtual void getNorm(unsigned long *minval /Out/,
+			     unsigned long *maxval /Out/,
+			     int *autorange /Out/) = 0;
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange) = 0;
+
+ protected:
+	bool checkSpecArray();
+	void releaseBuffer();
+};
+
+
+class LocalSPSGLDisplay : SPSGLDisplayBase
+{
+%TypeHeaderCode
+#include <GLDisplay.h>
+%End
+
+ public:
+	LocalSPSGLDisplay(SIP_PYLIST)[(int argc, char **argv)];
+%MethodCode
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A0(sipLocalSPSGLDisplay)
+%End
+	virtual ~LocalSPSGLDisplay();
+
+	virtual void createWindow();
+	virtual bool isClosed();
+
+	virtual void setTestImage(bool active);
+
+	virtual void refresh();
+
+	virtual void getRates(float *update /Out/, float *refresh /Out/);
+	virtual void getNorm(unsigned long *minval /Out/,
+			     unsigned long *maxval /Out/,
+			     int *autorange /Out/);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
+
+};
+
+class ForkedSPSGLDisplay : SPSGLDisplayBase
+{
+%TypeHeaderCode
+#include <GLDisplay.h>
+static void sipForkedSPSGLDisplay_Forked_Cb(void *data);
+%End
+
+ public:
+	ForkedSPSGLDisplay(SIP_PYLIST)[(int argc, char **argv)];
+%MethodCode
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A0(sipForkedSPSGLDisplay)
+%End
+	virtual ~ForkedSPSGLDisplay();
+
+	virtual void createWindow();
+	virtual bool isClosed();
+
+	virtual void setTestImage(bool active);
+
+	virtual void refresh();
+
+	virtual void getRates(float *update /Out/, float *refresh /Out/);
+	virtual void getNorm(unsigned long *minval /Out/,
+			     unsigned long *maxval /Out/,
+			     int *autorange /Out/);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
+
+	void setRefreshTime(float refresh_time);
+
+	void setForkCleanup(SIP_PYCALLABLE) /GetWrapper/;
+%MethodCode
+	sipSimpleWrapper *sipPySelf = (sipSimpleWrapper *) sipSelf;
+	if (sipPySelf->user) {
+		Py_DECREF(sipPySelf->user);
+		sipPySelf->user = NULL;
+		sipCpp->setForkCleanup(NULL, NULL);
+	}
+	if (a0 && (a0 != Py_None)) {
+		Py_INCREF(a0);
+		sipPySelf->user = a0;
+		sipCpp->setForkCleanup(sipForkedSPSGLDisplay_Forked_Cb,
+				       sipPySelf);
+	}
+%End
+
+%TypeCode
+static void sipForkedSPSGLDisplay_Forked_Cb(void *data)
+{
+	sipSimpleWrapper *sipPySelf = (sipSimpleWrapper *) data;
+	if (sipPySelf->user)
+		PyObject_Call(sipPySelf->user, NULL, NULL);
+}
+%End
+};
+
+class CtGLDisplay
+{
+%TypeHeaderCode
+#include <CtGLDisplay.h>
+using namespace lima;
+%End
+
+ public:
+	CtGLDisplay(CtControl *ct_control);
+	virtual ~CtGLDisplay();
+
+	virtual void createWindow() = 0;
+	virtual bool isClosed() = 0;
+	virtual void closeWindow() = 0;
+	virtual void refresh() = 0;
+	virtual void setTestImage(bool active) = 0;
+
+	virtual void getRates(float *update /Out/,
+			      float *refresh /Out/) = 0;
+	virtual void getNorm(unsigned long *minval /Out/,
+			     unsigned long *maxval /Out/,
+			     int *autorange /Out/) = 0;
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange) = 0;
+};
+
+
+class CtSPSGLDisplay : CtGLDisplay
+{
+%TypeHeaderCode
+#include <CtGLDisplay.h>
+using namespace lima;
+%End
+ public:
+	CtSPSGLDisplay(CtControl *ct_control, SIP_PYLIST)
+		       [(CtControl *ct_control,
+			 int argc = 0, char **argv = NULL)];
+%MethodCode
+	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A1(sipCtSPSGLDisplay)
+%End
+ public:
+	virtual ~CtSPSGLDisplay();
+
+	void setSpecArray(std::string spec_name, std::string array_name);
+	void getSpecArray(std::string& spec_name /Out/,
+			  std::string& array_name /Out/);
+
+	virtual void createWindow();
+	virtual bool isClosed();
+	virtual void closeWindow();
+	virtual void refresh();
+	virtual void setTestImage(bool active);
+
+	void setRefreshTime(float refresh_time);
+
+	virtual void getRates(float *update /Out/, float *refresh /Out/);
+	virtual void getNorm(unsigned long *minval /Out/,
+			     unsigned long *maxval /Out/,
+			     int *autorange /Out/);
+	virtual void setNorm(unsigned long minval, unsigned long maxval,
+			     int autorange);
 };
 
 %Import ../../../sip/core/limacore_tmp.sip
