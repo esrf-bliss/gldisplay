@@ -35,6 +35,9 @@ config:	sip.clean sip/Makefile
 sip:	sip/Makefile sip/gldisplay.so
 
 sip/Makefile:
+	test -n "$$QTDIR" || \
+		(echo "Must define the QTDIR variable (e.g. /usr/share/qt4)" &&\
+		 false)
 	cd sip && python configure.py
 
 sip/gldisplay.so:
