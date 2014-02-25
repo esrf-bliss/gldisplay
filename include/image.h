@@ -458,7 +458,7 @@ protected:
 	void checkApplication();
 
 private:
-	Argv *argv_copy;
+	AutoPtr<Argv> argv_copy;
 	QMutex main_mutex;
 	pthread_t main_thread;
 	QMutex img_op_mutex;

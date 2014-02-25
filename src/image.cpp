@@ -987,9 +987,8 @@ ImageLib::ImageLib(int argc, char **argv)
 	img_op_requested = OpNone;
 	img_op_win = NULL;
 
-	AutoPtr<Argv> argvp = new Argv(argc, argv);
-	argv = argvp->getArgv();
-	argv_copy = argvp;
+	argv_copy = new Argv(argc, argv);
+	argv = argv_copy->getArgv();
 
 	bool create_app = true;
 	for (int i = 0; i < argc; i++) {
@@ -998,16 +997,12 @@ ImageLib::ImageLib(int argc, char **argv)
 	}
 	if (create_app)
 		createApplication();
-
-	argvp.forget();
 }
 
 ImageLib::~ImageLib()
 {
 	Lock lock = getLock();
 	destroyApplication();
-
-	delete argv_copy;
 }
 
 void ImageLib::createApplication()
