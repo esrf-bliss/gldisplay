@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "SimplePipe.h"
+#include "AutoObj.h"
 
 class ImageWindow;
 class ImageLib;
@@ -166,8 +167,8 @@ class ForkedSPSGLDisplay : public SPSGLDisplayBase
 
 	int m_parent_pid;
 	int m_child_pid;
-	Pipe *m_cmd_pipe;
-	Pipe *m_res_pipe;
+	lima::AutoPtr<Pipe> m_cmd_pipe;
+	lima::AutoPtr<Pipe> m_res_pipe;
 	bool m_child_ended;
 	float m_refresh_time;
 	ForkCleanup *m_fork_cleanup;

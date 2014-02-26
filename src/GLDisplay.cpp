@@ -327,8 +327,6 @@ ForkedSPSGLDisplay::ForkedSPSGLDisplay(int argc, char **argv)
 {
 	m_parent_pid = m_child_pid = 0;
 	m_child_ended = false;
-	m_cmd_pipe = NULL;
-	m_res_pipe = NULL;
 }
 
 ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
@@ -340,8 +338,6 @@ ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
 		debug << "Child quited" << endl;
 	}
 
-	delete m_cmd_pipe;
-	delete m_res_pipe;
 }
 
 void ForkedSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,
@@ -354,13 +350,7 @@ void ForkedSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,
 void ForkedSPSGLDisplay::createWindow()
 {
 	m_cmd_pipe = new Pipe();
-	try {
-		m_res_pipe = new Pipe();
-	} catch (...) {
-		delete m_cmd_pipe;
-		m_cmd_pipe = NULL;
-		throw;
-	}
+	m_res_pipe = new Pipe();
 
 	m_child_ended = false;
 	m_child_pid = fork();
