@@ -327,6 +327,8 @@ ForkedSPSGLDisplay::ForkedSPSGLDisplay(int argc, char **argv)
 {
 	m_parent_pid = m_child_pid = 0;
 	m_child_ended = false;
+	m_fork_cleanup = NULL;
+	m_cleanup_data = NULL;
 }
 
 ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
@@ -337,7 +339,6 @@ ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
 			Sleep(m_refresh_time);
 		debug << "Child quited" << endl;
 	}
-
 }
 
 void ForkedSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,

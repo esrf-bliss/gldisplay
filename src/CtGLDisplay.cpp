@@ -51,11 +51,13 @@ const double CtSPSGLDisplay::DefaultRefreshTime = 10e-3;
 CtSPSGLDisplay::CtSPSGLDisplay(CtControl *ct_control, int argc, char **argv)
 	: CtGLDisplay(ct_control)
 {
+	m_fork_cleanup = NULL;
+	m_cleanup_data = NULL;
 	m_use_forked = true;
 	if (m_use_forked) {
 		ForkedSPSGLDisplay *gl_display;
 		gl_display = new ForkedSPSGLDisplay(argc, argv);
-		gl_display->setForkCleanup(processlibForkCleanup, NULL);
+		gl_display->setForkCleanup(thisForkCleanup, this);
 		m_sps_gl_display = gl_display;
 	}
 }
@@ -95,8 +97,20 @@ void CtSPSGLDisplay::setTestImage(bool active)
 }
 
 
-void CtSPSGLDisplay::processlibForkCleanup(void *)
+void CtSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,
+					void *cleanup_data)
 {
+	m_fork_cleanup = fork_cleanup;
+	m_cleanup_data = cleanup_data;
+}
+
+void CtSPSGLDisplay::thisForkCleanup(void *data)
+{
+	CtSPSGLDisplay *display = (CtSPSGLDisplay *) data;
+	if (display->m_fork_cleanup)
+		display->m_fork_cleanup(display->m_cleanup_data);
+
+	// Processlib fork cleanup
 	PoolThreadMgr::get().setThreadWaitOnQuit(false);
 }
 
