@@ -489,7 +489,7 @@ bool ForkedSPSGLDisplay::processParentCmd(string cmd_str)
 		unsigned long minval, maxval;
 		int autorange;
 		is >> minval >> maxval >> autorange;
-		m_gldisplay->getNorm(&minval, &maxval, &autorange);
+		m_gldisplay->setNorm(minval, maxval, autorange);
 	} else if (cmd == CmdSetRefreshTime) {
 		is >> m_refresh_time;
 	}
