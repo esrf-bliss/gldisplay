@@ -51,9 +51,9 @@ QTDEFINES       = -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DQT_NO_DEBUG \
 QTINCLD		= $(QTDIR)/include
 QTINCLS		= -I$(QTINCLD) -I$(QTINCLD)/QtCore -I$(QTINCLD)/QtGui \
 		  -I$(QTINCLD)/QtOpenGL
-QTFLAGS		= -m64 -pipe -g -O2 -Wall -W -D_REENTRANT \
+QTFLAGS		= -pipe -g -O2 -Wall -W -D_REENTRANT \
 		   $(QTINCLS) $(QTDEFINES)
-QTLDFLAGS	= -m64 -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL
+QTLDFLAGS	= -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL
 
 IMGFLAGS	= $(CFLAGS) $(QTFLAGS)
 IMGLDFLAGS	= $(QTLDFLAGS)
