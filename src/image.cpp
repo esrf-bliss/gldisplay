@@ -31,6 +31,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <cstdio>
 using namespace std;
 
 
@@ -809,6 +810,16 @@ ImageApplication *ImageApplication::createApplication(int& argc, char **argv)
 		if ((QString(argv[i]) == "-visual") && (i < argc - 1) &&
 		    QString(argv[i + 1]) == "DirectColor")
 			visualclass = DirectColor;
+	}
+
+	disp_name = XDisplayName(disp_name);
+	int disp_nr;
+	if ((sscanf(disp_name, "localhost:%d", &disp_nr) == 1) && 
+	    (disp_nr >= 10)) {
+		// Display 10+ on 127.0.0.1 is probably virtual:
+		// force indirect rendering to avoid problem on Mesa-GLX client
+		// library not finding a direct rendering GLX visual
+		setenv("LIBGL_ALWAYS_INDIRECT", "yes", 0);
 	}
 
 	Display *display = XOpenDisplay(disp_name);
