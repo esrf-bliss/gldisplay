@@ -25,7 +25,6 @@
 %ModuleHeaderCode
 
 extern "C" { void gldisplay_import_array();}
-extern "C" { void GLDisplay_Forked_Cb(void *data); }
 
 #define PYLIST_2_ARGC_ARGV_HEAD(ai, argc, argv, ok) \
 	int argc = PyList_Size(ai); \
@@ -68,35 +67,6 @@ extern "C" { void GLDisplay_Forked_Cb(void *data); }
 #define GLDISPLAY_CONSTRUCTOR_ARGC_ARGV_A1(glklass) \
 	GLDISPLAY_CONSTRUCTOR_ARGC_ARGV(a1, glklass, (a0,argc,argv) )
 
-#define SET_FORK_CLEANUP_CODE \
-	sipSimpleWrapper *sipPySelf = (sipSimpleWrapper *) sipSelf; \
-	PyObject *cb = sipPySelf->user; \
-	if (cb) { \
-		sipCpp->setForkCleanup(NULL, NULL); \
-		sipPySelf->user = NULL; \
-		Py_DECREF(cb); \
-	} \
-	\
-	if (a0 && (a0 != Py_None)) { \
-		Py_INCREF(a0); \
-		sipPySelf->user = a0; \
-		sipCpp->setForkCleanup(GLDisplay_Forked_Cb, sipPySelf); \
-	}
-
-%End
-
-%ModuleCode
-void GLDisplay_Forked_Cb(void *data)
-{
-	sipSimpleWrapper *sipPySelf = (sipSimpleWrapper *) data;
-	if (sipPySelf->user) {
-		SIP_BLOCK_THREADS
-		PyObject *res = PyObject_CallObject(sipPySelf->user, NULL);
-		if (res)
-			Py_DECREF(res);
-		SIP_UNBLOCK_THREADS
-	}
-}
 %End
 
 %PostInitialisationCode
@@ -204,7 +174,37 @@ class LocalSPSGLDisplay : SPSGLDisplayBase
 
 };
 
-class ForkedSPSGLDisplay : SPSGLDisplayBase
+class GLForkCallback
+{
+%TypeHeaderCode
+#include <GLDisplay.h>
+%End
+
+ public:
+	GLForkCallback();
+	virtual ~GLForkCallback();
+
+ protected:
+	virtual void execInForked() = 0;
+};
+
+class GLForkable
+{
+%TypeHeaderCode
+#include <GLDisplay.h>
+%End
+
+ public:
+	GLForkable();
+	~GLForkable();
+
+	void addForkCallback(GLForkCallback *fork_cb);
+	void removeForkCallback(GLForkCallback *fork_cb);
+
+	void execInForked();
+};
+
+class ForkedSPSGLDisplay : SPSGLDisplayBase, GLForkable
 {
 %TypeHeaderCode
 #include <GLDisplay.h>
@@ -232,11 +232,6 @@ class ForkedSPSGLDisplay : SPSGLDisplayBase
 			     int autorange);
 
 	void setRefreshTime(float refresh_time);
-
-	void setForkCleanup(SIP_PYCALLABLE) /GetWrapper/;
-%MethodCode
-	SET_FORK_CLEANUP_CODE
-%End
 
 };
 
@@ -267,7 +262,7 @@ using namespace lima;
 };
 
 
-class CtSPSGLDisplay : CtGLDisplay
+class CtSPSGLDisplay : CtGLDisplay, GLForkable
 {
 %TypeHeaderCode
 #include <CtGLDisplay.h>
@@ -301,11 +296,6 @@ using namespace lima;
 			     int *autorange /Out/);
 	virtual void setNorm(unsigned long minval, unsigned long maxval,
 			     int autorange);
-
-	void setForkCleanup(SIP_PYCALLABLE) /GetWrapper/;
-%MethodCode
-	SET_FORK_CLEANUP_CODE
-%End
 
 };
 

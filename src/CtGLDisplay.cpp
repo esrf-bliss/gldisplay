@@ -46,18 +46,31 @@ CtGLDisplay::~CtGLDisplay()
 // CtSPSGLDisplay
 //-------------------------------------------------------------
 
+CtSPSGLDisplay::ForkCallback::ForkCallback(CtSPSGLDisplay *gl_display)
+	: m_gl_display(gl_display)
+{
+}
+
+void CtSPSGLDisplay::ForkCallback::execInForked()
+{
+	// First exec local callbacks
+	m_gl_display->execInForked();
+
+	// Processlib fork cleanup
+	PoolThreadMgr::get().setThreadWaitOnQuit(false);
+}
+
+
 const double CtSPSGLDisplay::DefaultRefreshTime = 10e-3;
 
 CtSPSGLDisplay::CtSPSGLDisplay(CtControl *ct_control, int argc, char **argv)
-	: CtGLDisplay(ct_control)
+	: CtGLDisplay(ct_control), m_fork_cb(this)
 {
-	m_fork_cleanup = NULL;
-	m_cleanup_data = NULL;
 	m_use_forked = true;
 	if (m_use_forked) {
 		ForkedSPSGLDisplay *gl_display;
 		gl_display = new ForkedSPSGLDisplay(argc, argv);
-		gl_display->setForkCleanup(thisForkCleanup, this);
+		gl_display->addForkCallback(&m_fork_cb);
 		m_sps_gl_display = gl_display;
 	}
 }
@@ -94,24 +107,6 @@ void CtSPSGLDisplay::refresh()
 void CtSPSGLDisplay::setTestImage(bool active)
 {
 	return m_sps_gl_display->setTestImage(active);
-}
-
-
-void CtSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,
-					void *cleanup_data)
-{
-	m_fork_cleanup = fork_cleanup;
-	m_cleanup_data = cleanup_data;
-}
-
-void CtSPSGLDisplay::thisForkCleanup(void *data)
-{
-	CtSPSGLDisplay *display = (CtSPSGLDisplay *) data;
-	if (display->m_fork_cleanup)
-		display->m_fork_cleanup(display->m_cleanup_data);
-
-	// Processlib fork cleanup
-	PoolThreadMgr::get().setThreadWaitOnQuit(false);
 }
 
 void CtSPSGLDisplay::setSpecArray(string spec_name, string array_name)

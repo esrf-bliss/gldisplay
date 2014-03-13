@@ -100,8 +100,10 @@ void GLDisplay::createWindow(string caption)
 
 ImageWindow *GLDisplay::getImageWindow()
 {
-	if (!m_image_window)
+	if (!m_image_window) {
+		cerr << "No GLDisplay image window" << endl;
 		throw exception();
+	}
 	return m_image_window;
 }
 
@@ -308,6 +310,69 @@ void LocalSPSGLDisplay::setNorm(unsigned long minval, unsigned long maxval,
 
 
 //-------------------------------------------------------------
+// GLForkCallback 
+//-------------------------------------------------------------
+
+GLForkCallback::GLForkCallback()
+	: m_forkable(NULL)
+{
+}
+
+GLForkCallback::~GLForkCallback()
+{
+	if (m_forkable)
+		m_forkable->removeForkCallback(this);
+}
+
+
+//-------------------------------------------------------------
+// GLForkable
+//-------------------------------------------------------------
+
+GLForkable::GLForkable()
+{
+}
+
+GLForkable::~GLForkable()
+{
+	ForkCbList::iterator it, end = m_fork_cb_list.end();
+	for (it = m_fork_cb_list.begin(); it != end; ++it)
+		(*it)->m_forkable = NULL;
+}
+
+void GLForkable::addForkCallback(GLForkCallback *fork_cb)
+{
+	ForkCbList::iterator it, end = m_fork_cb_list.end();
+	it = find(m_fork_cb_list.begin(), end, fork_cb);
+	if (it != end) {
+		cerr << "GLForkCallback already registered" << endl;
+		throw exception();
+	}
+	// Insert in front for reverse callback execution
+	m_fork_cb_list.insert(m_fork_cb_list.begin(), fork_cb);
+	fork_cb->m_forkable = this;
+}
+
+void GLForkable::removeForkCallback(GLForkCallback *fork_cb)
+{
+	ForkCbList::iterator it, end = m_fork_cb_list.end();
+	it = find(m_fork_cb_list.begin(), end, fork_cb);
+	if (it == end) {
+		cerr << "GLForkCallback not registered" << endl;
+		throw exception();
+	}
+	fork_cb->m_forkable = NULL;
+	m_fork_cb_list.erase(it);
+}
+
+void GLForkable::execInForked()
+{
+	ForkCbList::iterator it, end = m_fork_cb_list.end();
+	for (it = m_fork_cb_list.begin(); it != end; ++it)
+		(*it)->execInForked();
+}
+
+//-------------------------------------------------------------
 // ForkedSPSGLDisplay
 //-------------------------------------------------------------
 
@@ -327,8 +392,6 @@ ForkedSPSGLDisplay::ForkedSPSGLDisplay(int argc, char **argv)
 {
 	m_parent_pid = m_child_pid = 0;
 	m_child_ended = false;
-	m_fork_cleanup = NULL;
-	m_cleanup_data = NULL;
 }
 
 ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
@@ -339,13 +402,6 @@ ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
 			Sleep(m_refresh_time);
 		debug << "Child quited" << endl;
 	}
-}
-
-void ForkedSPSGLDisplay::setForkCleanup(ForkCleanup *fork_cleanup,
-					void *cleanup_data)
-{
-	m_fork_cleanup = fork_cleanup;
-	m_cleanup_data = cleanup_data;
 }
 
 void ForkedSPSGLDisplay::createWindow()
@@ -361,8 +417,7 @@ void ForkedSPSGLDisplay::createWindow()
 
 		m_parent_pid = getppid();
 		signal(SIGINT, SIG_IGN);
-		if (m_fork_cleanup)
-			m_fork_cleanup(m_cleanup_data);
+		execInForked();
 
 		runChild();
 	} else {
