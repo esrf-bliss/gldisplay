@@ -132,7 +132,39 @@ class LocalSPSGLDisplay : public SPSGLDisplayBase
  private:
 };
 
-class ForkedSPSGLDisplay : public SPSGLDisplayBase
+class GLForkable;
+
+class GLForkCallback
+{
+ public:
+	GLForkCallback();
+	virtual ~GLForkCallback();
+
+ protected:
+	virtual void execInForked() = 0;
+
+ private:
+	friend class GLForkable;
+	GLForkable *m_forkable;
+};
+
+class GLForkable
+{
+ public:
+	GLForkable();
+	~GLForkable();
+
+	void addForkCallback(GLForkCallback *fork_cb);
+	void removeForkCallback(GLForkCallback *fork_cb);
+
+	void execInForked();
+
+ private:
+	typedef std::vector<GLForkCallback *> ForkCbList;
+	ForkCbList m_fork_cb_list;
+};
+
+class ForkedSPSGLDisplay : public SPSGLDisplayBase, public GLForkable
 {
  public:
 	typedef void ForkCleanup(void *cleanup_data);
@@ -155,8 +187,6 @@ class ForkedSPSGLDisplay : public SPSGLDisplayBase
 
 	void setRefreshTime(float refresh_time);
 
-	void setForkCleanup(ForkCleanup *fork_cleanup, void *cleanup_data);
-
  private:
 	void runChild();
 	bool checkParentAlive();
@@ -171,8 +201,6 @@ class ForkedSPSGLDisplay : public SPSGLDisplayBase
 	lima::AutoPtr<Pipe> m_res_pipe;
 	bool m_child_ended;
 	float m_refresh_time;
-	ForkCleanup *m_fork_cleanup;
-	void *m_cleanup_data;
 
 	static const float ParentCheckTime;
 

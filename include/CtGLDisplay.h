@@ -49,11 +49,9 @@ class CtGLDisplay
 };
 
 
-class CtSPSGLDisplay : public CtGLDisplay
+class CtSPSGLDisplay : public CtGLDisplay, public GLForkable
 {
  public:
-	typedef void ForkCleanup(void *cleanup_data);
-
 	CtSPSGLDisplay(lima::CtControl *ct_control,
 		       int argc = 0, char **argv = NULL);
 	virtual ~CtSPSGLDisplay();
@@ -75,17 +73,23 @@ class CtSPSGLDisplay : public CtGLDisplay
 	virtual void setNorm(unsigned long minval, unsigned long maxval,
 			     int autorange);
 
-	void setForkCleanup(ForkCleanup *fork_cleanup, void *cleanup_data);
-
  private:
-	static const double DefaultRefreshTime;
+	class ForkCallback : public GLForkCallback
+	{
+	public:
+		ForkCallback(CtSPSGLDisplay *gl_display);
+	protected:
+		virtual void execInForked();
+	private:
+		CtSPSGLDisplay *m_gl_display;
+	};
+	friend class ForkCallback;
 
-	static void thisForkCleanup(void *data);
+	static const double DefaultRefreshTime;
 
 	SPSGLDisplayBase *m_sps_gl_display;
 	bool m_use_forked;
-	ForkCleanup *m_fork_cleanup;
-	void *m_cleanup_data;
+	ForkCallback m_fork_cb;
 };
 
 #endif // __CTGLDISPLAY_H__
