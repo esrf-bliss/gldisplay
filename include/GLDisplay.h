@@ -203,6 +203,7 @@ class ForkedSPSGLDisplay : public SPSGLDisplayBase, public GLForkable
 	float m_refresh_time;
 
 	static const float ParentCheckTime;
+	static const float DefaultRefreshTime;
 
 	enum {
 		CmdQuit,

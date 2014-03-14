@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -73,7 +74,8 @@ ImageLib *GLDisplay::m_image_lib = NULL;
 void GLDisplay::Sleep(float sleep_time)
 {
 	int sleep_usec = int(sleep_time * 1e6 + 0.1);
-	usleep(sleep_usec);
+	if (sleep_usec > 0)
+		usleep(sleep_usec);
 }
 
 GLDisplay::GLDisplay(int argc, char **argv)
@@ -377,6 +379,7 @@ void GLForkable::execInForked()
 //-------------------------------------------------------------
 
 const float ForkedSPSGLDisplay::ParentCheckTime = 0.5;
+const float ForkedSPSGLDisplay::DefaultRefreshTime = 10e-3;
 
 const string ForkedSPSGLDisplay::CmdList[NrCmd] = {
 	"quit",
@@ -392,6 +395,7 @@ ForkedSPSGLDisplay::ForkedSPSGLDisplay(int argc, char **argv)
 {
 	m_parent_pid = m_child_pid = 0;
 	m_child_ended = false;
+	m_refresh_time = DefaultRefreshTime;
 }
 
 ForkedSPSGLDisplay::~ForkedSPSGLDisplay()
@@ -466,6 +470,9 @@ bool ForkedSPSGLDisplay::checkParentAlive()
 
 string ForkedSPSGLDisplay::sendChildCmd(string cmd)
 {
+	if (!m_child_pid)
+		return string();
+
 	cmd.append("\n");
 	debug << "Sending: " << cmd;
 	m_cmd_pipe->write(cmd);
@@ -568,6 +575,8 @@ bool ForkedSPSGLDisplay::isClosed()
 {
 	if (!m_child_ended)
 		m_child_ended = (waitpid(m_child_pid, NULL, WNOHANG) != 0);
+	if (m_child_ended)
+		m_child_pid = 0;
 
 	return m_child_ended;
 }
@@ -607,5 +616,7 @@ void ForkedSPSGLDisplay::setRefreshTime(float refresh_time)
 	ostringstream os;
 	os << CmdList[CmdSetRefreshTime] << " " << refresh_time;
 	sendChildCmd(os.str());
+	// Also update local copy, used when waiting for window to close
+	m_refresh_time = refresh_time;
 }
 

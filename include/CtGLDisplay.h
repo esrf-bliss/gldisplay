@@ -85,8 +85,6 @@ class CtSPSGLDisplay : public CtGLDisplay, public GLForkable
 	};
 	friend class ForkCallback;
 
-	static const double DefaultRefreshTime;
-
 	SPSGLDisplayBase *m_sps_gl_display;
 	bool m_use_forked;
 	ForkCallback m_fork_cb;

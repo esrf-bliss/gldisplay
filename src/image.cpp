@@ -34,6 +34,12 @@
 #include <cstdio>
 using namespace std;
 
+#ifdef __GNUC__
+#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#else
+#  define UNUSED(x) UNUSED_ ## x
+#endif
+
 
 /********************************************************************
  * ImageContext
@@ -246,10 +252,10 @@ void ImageWidget::setColormap(ColormapType cmap)
 	}
 }
 	
-int ImageWidget::checkColorTableColormap(float map[][4], int size)
+int ImageWidget::checkColorTableColormap(float map[][4], int UNUSED(size))
 {
 	char *extensions = (char *) glGetString(GL_EXTENSIONS);
-	char *ext = "GL_ARB_imaging";
+	const char *ext = "GL_ARB_imaging";
 	char *ptr = strstr(extensions, ext);
 	if (!ptr)
 		return 0;
@@ -285,7 +291,7 @@ void ImageWidget::setPixelMapColormap(float map[][4], int size)
 	glPixelMapfv(GL_PIXEL_MAP_I_TO_A, size, cimap[3]);
 }
 
-int ImageWidget::checkX11Colormap(float map[][4], int size)
+int ImageWidget::checkX11Colormap(float UNUSED(map[][4]), int UNUSED(size))
 {
 	Display *display = QX11Info::display();
 	Window win = winId();
@@ -750,7 +756,7 @@ int ImageWindow::startTimer(int msec)
 	return timer_id;
 }
 
-void ImageWindow::timerEvent(QTimerEvent *event)
+void ImageWindow::timerEvent(QTimerEvent *UNUSED(event))
 {
 	killTimer(timer_id);
 	if (!max_refresh_rate || max_refresh_rate->isTime()) {
@@ -832,7 +838,7 @@ ImageApplication *ImageApplication::createApplication(int& argc, char **argv)
 	Visual *visual = NULL;
 	if (XMatchVisualInfo(display, screen, 24, visualclass, &vi) != 0) {
 		visual = vi.visual;
-		char *visualname;
+		const char *visualname;
 		switch (vi.c_class) {
 		case DirectColor: visualname = "DirectColor"; break;
 		case TrueColor:   visualname = "TrueColor";   break;
