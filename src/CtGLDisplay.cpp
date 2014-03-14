@@ -61,8 +61,6 @@ void CtSPSGLDisplay::ForkCallback::execInForked()
 }
 
 
-const double CtSPSGLDisplay::DefaultRefreshTime = 10e-3;
-
 CtSPSGLDisplay::CtSPSGLDisplay(CtControl *ct_control, int argc, char **argv)
 	: CtGLDisplay(ct_control), m_fork_cb(this)
 {
@@ -90,8 +88,6 @@ void CtSPSGLDisplay::closeWindow()
 void CtSPSGLDisplay::createWindow()
 {
 	m_sps_gl_display->createWindow();
-	if (m_use_forked)
-		setRefreshTime(DefaultRefreshTime);
 }
 
 bool CtSPSGLDisplay::isClosed()
