@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "SimplePipe.h"
-#include "AutoObj.h"
+#include "lima/AutoObj.h"
 
 class ImageWindow;
 class ImageLib;

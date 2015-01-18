@@ -24,7 +24,7 @@
 #define __CTGLDISPLAY_H__
 
 #include "GLDisplay.h"
-#include "CtControl.h"
+#include "lima/CtControl.h"
 
 class CtGLDisplay
 {

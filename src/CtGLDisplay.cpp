@@ -22,12 +22,12 @@
 //###########################################################################
 
 #include "CtGLDisplay.h"
-#include "CtSpsImage.h"
+#include "lima/CtSpsImage.h"
 
 using namespace lima;
 using namespace std;
 
-#include "PoolThreadMgr.h"
+#include "processlib/PoolThreadMgr.h"
 
 //-------------------------------------------------------------
 // CtGLDisplay
