@@ -25,10 +25,10 @@
 all:	src test
 
 src:
-	make -C src -j2
+	$(MAKE) -C src
 
 test:
-	make -C test -j2
+	$(MAKE) -C test
 
 config:	sip.clean sip/Makefile
 	
@@ -41,11 +41,11 @@ sip/Makefile:
 	cd sip && python configure.py
 
 sip/gldisplay.so:
-	$(MAKE) -C sip -j2
+	$(MAKE) -C sip
 
 clean:	sip.clean
-	make -C src clean
-	make -C test clean
+	$(MAKE) -C src clean
+	$(MAKE) -C test clean
 
 sip.clean:
 	cd sip && python clean.py
