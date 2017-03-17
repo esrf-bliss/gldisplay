@@ -21,6 +21,9 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
+include $(LIMA_DIR)/config.inc
+include $(LIMA_DIR)/control/control.inc
+
 INCL		= ../include
 SRC		= ../src
 BUILD		= ../build
@@ -28,22 +31,14 @@ TEST		= ../test
 
 VERSION		= ../VERSION
 
-LIMA		= ../../..
-COMMON		= $(LIMA)/common
-CONTROL		= $(LIMA)/control
-HARDWARE	= $(LIMA)/hardware
-SPS		= $(LIMA)/third-party/Sps
-PROCLIB		= $(LIMA)/third-party/Processlib
-PROCLIBCORE	= $(PROCLIB)/core
-SIMU		= $(LIMA)/camera/simulator
-
 ifndef QTDIR
 $(error QTDIR environment variable must be defined)
 endif
 
 MOC             = $(QTDIR)/bin/moc
 
-CFLAGS		= -Wall -g -I$(INCL) -fPIC -pthread
+CPPFLAGS	= -I$(INCL)
+CXXFLAGS	= $(CT_CXXFLAGS)
 
 QTDEFINES       = -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DQT_NO_DEBUG \
 		  -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED
@@ -55,14 +50,14 @@ QTFLAGS		= -pipe -g -O2 -Wall -W -D_REENTRANT \
 		   $(QTINCLS) $(QTDEFINES)
 QTLDFLAGS	= -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL
 
-IMGFLAGS	= $(CFLAGS) $(QTFLAGS)
+IMGFLAGS	= $(CPPFLAGS) $(CXXFLAGS) $(QTFLAGS)
 IMGLDFLAGS	= $(QTLDFLAGS)
 
-LIMAFLAGS	= -I$(COMMON)/include -I$(CONTROL)/include \
-		  -I$(HARDWARE)/include -I$(PROCLIBCORE)/include \
-		  -I$(SPS)/Include -I$(SIMU)/include -DWITH_SPS_IMAGE
-LIMALDFLAGS	= -L$(LIMA)/build -L$(PROCLIB)/build
-LIMALDLIBS	= -llimacore -lprocesslib
+LIMAFLAGS	= $(CT_CPPFLAGS) $(CT_CXXFLAGS) \
+                  -I$(LIMA_DIR)/camera/simulator/include
+LIMADEPLIBS     = $(CT_DEPLIBS) $(LIMA_DIR)/build,limacore
+LIMALDFLAGS	= $(CT_LDFLAGS) $(call lib-depflags,$(LIMADEPLIBS))
+LIMALDLIBS	= $(CT_LDLIBS) $(call lib-deplibs,$(LIMADEPLIBS))
 SIMULDLIBS	= -llimasimulator 
 
 GLDISPLAY_LIBFULLVER	= $(shell cat $(VERSION))
