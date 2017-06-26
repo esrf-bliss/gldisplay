@@ -1,11 +1,12 @@
 ############################################################################
-# This file is part of gldisplay, a submodule of LImA project the
-# Library for Image Acquisition
+# This file is part of LImA, a Library for Image Acquisition
 #
-# Copyright (C) : 2009-2011
+# Copyright (C) : 2009-2017
 # European Synchrotron Radiation Facility
 # BP 220, Grenoble 38043
 # FRANCE
+#
+# Contact: lima@esrf.fr
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,5 +21,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
-from Lima import Core
-from limagldisplay import *
+
+set(test_src test_gldisplay_thirdparty test_gldisplay_simu)
+
+foreach(file ${test_src})
+	add_executable(${file} "${file}.cpp")
+	target_link_libraries(${file} limacore ${NAME})
+	add_test(NAME ${file} COMMAND ${file})
+endforeach(file)
+

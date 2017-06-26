@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
-#include "GLDisplay.h"
+#include "../include/GLDisplay.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>

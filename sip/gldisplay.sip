@@ -20,11 +20,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
-%Module(name=gldisplay,version=0)
+%Module(name=limagldisplay,version=0)
 
 %ModuleHeaderCode
-
-extern "C" { void gldisplay_import_array();}
 
 #define PYLIST_2_ARGC_ARGV_HEAD(ai, argc, argv, ok) \
 	int argc = PyList_Size(ai); \
@@ -69,9 +67,18 @@ extern "C" { void gldisplay_import_array();}
 
 %End
 
-%PostInitialisationCode
-gldisplay_import_array();
+%ModuleHeaderCode
+extern "C" { void lima_import_array();}
 %End
+
+%UnitCode
+#include <lima_init_numpy.cpp>
+%End
+
+%PostInitialisationCode
+lima_import_array();
+%End
+
 
 class GLDisplay
 {
@@ -269,4 +276,4 @@ using namespace lima;
 
 };
 
-%Import ../../../sip/core/limacore_tmp.sip
+@IMPORTS@
