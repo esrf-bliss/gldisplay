@@ -22,7 +22,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
-set(test_src test_gldisplay_thirdparty test_gldisplay_simu)
+set(test_src test_gldisplay_thirdparty) #test_gldisplay_simu)
 
 foreach(file ${test_src})
 	add_executable(${file} "${file}.cpp")
