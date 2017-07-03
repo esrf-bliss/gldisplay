@@ -24,17 +24,19 @@
 
 find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL REQUIRED)
 
-QT4_GENERATE_MOC("${CMAKE_CURRENT_SOURCE_DIR}/include/image.h" "${CMAKE_CURRENT_SOURCE_DIR}/src/moc_image.cpp")
+qt4_generate_moc("${CMAKE_CURRENT_SOURCE_DIR}/include/image.h" "${CMAKE_BINARY_DIR}/third-party/gldisplay/src/moc_image.cpp")
 
 add_definitions(-D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DQT_NO_DEBUG 
 				-DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED
 				-pipe -g -O2 -Wall -W -D_REENTRANT -O1)
 set(gldisplay_src src/CtGLDisplay.cpp src/GLDisplay.cpp
 	src/image.cpp src/SimplePipe.cpp
-	src/moc_image.cpp)
+	${CMAKE_BINARY_DIR}/third-party/gldisplay/src/moc_image.cpp)
 
 file(STRINGS "VERSION" gldisplay_vers)
 add_library(gldisplay SHARED ${gldisplay_src})
+
+limatools_set_library_soversion(gldisplay "VERSION")
 
 target_include_directories(gldisplay PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -49,12 +51,9 @@ target_link_libraries(gldisplay limacore)
 target_link_libraries(gldisplay ${GL_LIB})
 target_link_libraries(gldisplay ${X11_LIB})
 
+install(TARGETS gldisplay LIBRARY DESTINATION lib)
 
-SET_TARGET_PROPERTIES(gldisplay PROPERTIES VERSION ${gldisplay_vers} SOVERSION "1")
-
-INSTALL(TARGETS gldisplay LIBRARY DESTINATION lib)
-
-if(COMPILE_SIP)
+if(LIMA_ENABLE_PYTHON)
 	set(NAME "gldisplay")
 	set(IMPORTS 
 "${IMPORTS}
@@ -75,18 +74,16 @@ if(COMPILE_SIP)
 		"${CMAKE_SOURCE_DIR}/control/sip"
 		"${CMAKE_SOURCE_DIR}/control/software_operation/sip"
 		"${CMAKE_CURRENT_SOURCE_DIR}/sip")
-	set(SIP_DISABLE_FEATURES WITH_CONFIG)
-	set(SIP_CHECK_EXC ON)
-	ADD_SIP_PYTHON_MODULE(${NAME} ${CMAKE_CURRENT_BINARY_DIR}/sip/${NAME}.sip)
-	TARGET_INCLUDE_DIRECTORIES(python_module_${NAME} PRIVATE
+	add_sip_python_module(${NAME} ${CMAKE_CURRENT_BINARY_DIR}/sip/${NAME}.sip)
+	target_include_directories(python_module_${NAME} PRIVATE
 							  ${PYTHON_INCLUDE_DIRS}
 							  "${CMAKE_SOURCE_DIR}/sip"
 							  "${CMAKE_SOURCE_DIR}/sip/core")
-	TARGET_LINK_LIBRARIES(python_module_${NAME} ${NAME})
-	INSTALL(FILES python/__init__.py DESTINATION "${PYTHON_SITE_PACKAGES_DIR}/Lima/GLDisplay")
+	target_link_libraries(python_module_${NAME} ${NAME})
+	install(FILES python/__init__.py DESTINATION "${PYTHON_SITE_PACKAGES_DIR}/Lima/GLDisplay")
 
 endif()
 
-if(COMPILE_TEST)
-	add_subdirectory(test/)
+if(LIMA_ENABLE_TESTS)
+	add_subdirectory(test)
 endif()

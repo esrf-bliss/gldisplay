@@ -21,4 +21,4 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 from Lima import Core
-from limagldisplay import *
+from gldisplay import *

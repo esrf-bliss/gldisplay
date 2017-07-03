@@ -20,7 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
-%Module(name=limagldisplay,version=0)
+%Module(name=gldisplay,version=0)
 
 %ModuleHeaderCode
 

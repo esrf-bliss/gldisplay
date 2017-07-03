@@ -1,6 +1,0 @@
--DWITH_CONFIG
--DWITH_SPS_IMAGE
--DWITH_TIFF_SAVING
--o
-/users/aitor/Git/lima/third-party/gldisplay/src/moc_image.cpp
-/users/aitor/Git/lima/third-party/gldisplay/include/image.h
