@@ -76,7 +76,7 @@ extern "C" { void lima_import_array();}
 %End
 
 %PostInitialisationCode
-gldisplay_import_array();
+lima_import_array();
 %End
 
 class GLDisplay
