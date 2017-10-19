@@ -42,19 +42,12 @@ import time
 import signal
 from Lima import Core, Simulator, GLDisplay
 
-class SimuForkCb(GLDisplay.GLForkCallback):
-	def execInForked(self):
-		print "Simulator GLDisplay: this is executed in forked context"
-
-simu_fork_cb = SimuForkCb()
-
 simu = Simulator.Camera()
 hw_inter = Simulator.Interface(simu)
 ct_control = Core.CtControl(hw_inter)
 
 gldisplay = GLDisplay.CtSPSGLDisplay(ct_control, [])
 gldisplay.setSpecArray('GLDisplayTest', 'Simulator')
-gldisplay.addForkCallback(simu_fork_cb)
 gldisplay.createWindow()
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 

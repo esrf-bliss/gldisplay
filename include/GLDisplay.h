@@ -132,39 +132,7 @@ class LocalSPSGLDisplay : public SPSGLDisplayBase
  private:
 };
 
-class GLForkable;
-
-class GLForkCallback
-{
- public:
-	GLForkCallback();
-	virtual ~GLForkCallback();
-
- protected:
-	virtual void execInForked() = 0;
-
- private:
-	friend class GLForkable;
-	GLForkable *m_forkable;
-};
-
-class GLForkable
-{
- public:
-	GLForkable();
-	~GLForkable();
-
-	void addForkCallback(GLForkCallback *fork_cb);
-	void removeForkCallback(GLForkCallback *fork_cb);
-
-	void execInForked();
-
- private:
-	typedef std::vector<GLForkCallback *> ForkCbList;
-	ForkCbList m_fork_cb_list;
-};
-
-class ForkedSPSGLDisplay : public SPSGLDisplayBase, public GLForkable
+class ForkedSPSGLDisplay : public SPSGLDisplayBase
 {
  public:
 	typedef void ForkCleanup(void *cleanup_data);

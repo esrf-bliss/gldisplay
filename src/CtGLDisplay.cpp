@@ -46,29 +46,13 @@ CtGLDisplay::~CtGLDisplay()
 // CtSPSGLDisplay
 //-------------------------------------------------------------
 
-CtSPSGLDisplay::ForkCallback::ForkCallback(CtSPSGLDisplay *gl_display)
-	: m_gl_display(gl_display)
-{
-}
-
-void CtSPSGLDisplay::ForkCallback::execInForked()
-{
-	// First exec local callbacks
-	m_gl_display->execInForked();
-
-	// Processlib fork cleanup
-	PoolThreadMgr::get().setThreadWaitOnQuit(false);
-}
-
-
 CtSPSGLDisplay::CtSPSGLDisplay(CtControl *ct_control, int argc, char **argv)
-	: CtGLDisplay(ct_control), m_fork_cb(this)
+	: CtGLDisplay(ct_control)
 {
 	m_use_forked = true;
 	if (m_use_forked) {
 		ForkedSPSGLDisplay *gl_display;
 		gl_display = new ForkedSPSGLDisplay(argc, argv);
-		gl_display->addForkCallback(&m_fork_cb);
 		m_sps_gl_display = gl_display;
 	}
 }
