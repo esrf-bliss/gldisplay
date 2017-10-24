@@ -45,6 +45,35 @@ peak_angles = [
 TestAlternatePeriod = 5.0
 refresh_time = 0.01
 alternate_test_image = False
+int_trig_mult = False
+acq_stopped = False
+
+class ImageStatusCallback(Core.CtControl.ImageStatusCallback):
+
+	def __init__(self, simu, ct_control):
+		super(ImageStatusCallback, self).__init__()
+		self.simu = simu
+		self.ct_control = ct_control
+		self.last_acq_frame = -1
+
+	def imageStatusChanged(self, status):
+		last_acq_frame = status.LastImageAcquired
+		if last_acq_frame == self.last_acq_frame:
+			return
+		self.last_acq_frame = last_acq_frame
+		ct_acq = self.ct_control.acquisition()
+		last_frame = ct_acq.getAcqNbFrames() - 1
+		if self.last_acq_frame == last_frame:
+			return
+		if acq_stopped:
+			return
+		ct_status = self.ct_control.getStatus()
+		if ct_status.AcquisitionStatus != Core.AcqRunning:
+			return
+		Ready = Core.HwInterface.StatusType.Ready
+		while self.simu.getStatus() != Ready:
+			time.sleep(0.01)
+		self.ct_control.startAcq()
 
 def refresh_loop(ct_gl_display):
 	test_image = 0
@@ -69,20 +98,28 @@ def refresh_loop(ct_gl_display):
 			rates_refresh_t0 = time.time()
 
 def main(argv):
+	global alternate_test_image, int_trig_mult, acq_stopped
+
 	exp_time = 0.1
 	nb_frames = 180
 
 	spec_name = 'GLDisplayTest'
 	array_name = 'Simulator'
 
-	if (len(argv) > 1) and (argv[1] == '--alternate-test'):
-		alternate_test_image = True
+	for arg in argv[1:]:
+		if arg == '--alternate-test':
+			alternate_test_image = True
+		if arg == '--int-trig-mult':
+			int_trig_mult = True
+
+	trig_mode = Core.IntTrigMult if int_trig_mult else Core.IntTrig
 
 	simu = Simulator.Camera()
 	simu_fb = simu.getFrameBuilder()
 	simu_fb.setPeaks(peaks)
 	simu_fb.setPeakAngles(peak_angles)
 	simu_fb.setRotationSpeed(360 / nb_frames)
+	simu_fb.setGrowFactor(0)
 
 	simu_hw = Simulator.Interface(simu)
 	ct_control = Core.CtControl(simu_hw)
@@ -90,10 +127,15 @@ def main(argv):
 
 	ct_acq.setAcqExpoTime(exp_time)
 	ct_acq.setAcqNbFrames(nb_frames)
+	ct_acq.setTriggerMode(trig_mode)
 
 	ct_gl_display = GLDisplay.CtSPSGLDisplay(ct_control, argv)
 	ct_gl_display.setSpecArray(spec_name, array_name)
 	ct_gl_display.createWindow()
+
+	if trig_mode == Core.IntTrigMult:
+		cb = ImageStatusCallback(simu, ct_control)
+		ct_control.registerImageStatusCallback(cb)
 
 	ct_control.prepareAcq()
 	ct_control.startAcq()
@@ -106,6 +148,7 @@ def main(argv):
 	ct_status = ct_control.getStatus()
 
 	if ct_status.AcquisitionStatus == Core.AcqRunning:
+		acq_stopped = True
 		ct_control.stopAcq()
 		while ct_status.AcquisitionStatus == Core.AcqRunning:
 			time.sleep(refresh_time)
