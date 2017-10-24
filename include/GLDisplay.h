@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-#include "SimplePipe.h"
+#include "lima/SimplePipe.h"
 #include "lima/AutoObj.h"
 
 class ImageWindow;
