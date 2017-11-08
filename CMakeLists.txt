@@ -30,7 +30,7 @@ add_definitions(-D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DQT_NO_DEBUG
 				-DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_SHARED
 				-pipe -g -O2 -Wall -W -D_REENTRANT -O1)
 set(gldisplay_src src/CtGLDisplay.cpp src/GLDisplay.cpp
-	src/image.cpp src/SimplePipe.cpp
+	src/image.cpp
 	${CMAKE_BINARY_DIR}/third-party/gldisplay/src/moc_image.cpp)
 
 file(STRINGS "VERSION" gldisplay_vers)
