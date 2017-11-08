@@ -35,11 +35,7 @@ $(GLDISPLAY_LIB):		$(GLDISPLAY_OBJS)
 	ln -s `basename $(GLDISPLAY_LIBMINORLINK)` $(GLDISPLAY_LIBLINK)
 
 # The GLDisplay library
-$(SRC)/SimplePipe.o:		$(SRC)/SimplePipe.cpp $(INCL)/SimplePipe.h
-	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
-
-$(SRC)/GLDisplay.o:		$(SRC)/GLDisplay.cpp $(INCL)/GLDisplay.h \
-				$(INCL)/SimplePipe.h
+$(SRC)/GLDisplay.o:		$(SRC)/GLDisplay.cpp $(INCL)/GLDisplay.h
 	$(CXX) -c $(IMGFLAGS) $(LIMAFLAGS) -o $@ $<
 
 $(SRC)/CtGLDisplay.o:		$(SRC)/CtGLDisplay.cpp $(INCL)/CtGLDisplay.h \

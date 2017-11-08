@@ -174,37 +174,7 @@ class LocalSPSGLDisplay : SPSGLDisplayBase
 
 };
 
-class GLForkCallback
-{
-%TypeHeaderCode
-#include <GLDisplay.h>
-%End
-
- public:
-	GLForkCallback();
-	virtual ~GLForkCallback();
-
- protected:
-	virtual void execInForked() = 0;
-};
-
-class GLForkable
-{
-%TypeHeaderCode
-#include <GLDisplay.h>
-%End
-
- public:
-	GLForkable();
-	~GLForkable();
-
-	void addForkCallback(GLForkCallback *fork_cb);
-	void removeForkCallback(GLForkCallback *fork_cb);
-
-	void execInForked();
-};
-
-class ForkedSPSGLDisplay : SPSGLDisplayBase, GLForkable
+class ForkedSPSGLDisplay : SPSGLDisplayBase
 {
 %TypeHeaderCode
 #include <GLDisplay.h>
@@ -262,7 +232,7 @@ using namespace lima;
 };
 
 
-class CtSPSGLDisplay : CtGLDisplay, GLForkable
+class CtSPSGLDisplay : CtGLDisplay
 {
 %TypeHeaderCode
 #include <CtGLDisplay.h>

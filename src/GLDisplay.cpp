@@ -312,69 +312,6 @@ void LocalSPSGLDisplay::setNorm(unsigned long minval, unsigned long maxval,
 
 
 //-------------------------------------------------------------
-// GLForkCallback 
-//-------------------------------------------------------------
-
-GLForkCallback::GLForkCallback()
-	: m_forkable(NULL)
-{
-}
-
-GLForkCallback::~GLForkCallback()
-{
-	if (m_forkable)
-		m_forkable->removeForkCallback(this);
-}
-
-
-//-------------------------------------------------------------
-// GLForkable
-//-------------------------------------------------------------
-
-GLForkable::GLForkable()
-{
-}
-
-GLForkable::~GLForkable()
-{
-	ForkCbList::iterator it, end = m_fork_cb_list.end();
-	for (it = m_fork_cb_list.begin(); it != end; ++it)
-		(*it)->m_forkable = NULL;
-}
-
-void GLForkable::addForkCallback(GLForkCallback *fork_cb)
-{
-	ForkCbList::iterator it, end = m_fork_cb_list.end();
-	it = find(m_fork_cb_list.begin(), end, fork_cb);
-	if (it != end) {
-		cerr << "GLForkCallback already registered" << endl;
-		throw exception();
-	}
-	// Insert in front for reverse callback execution
-	m_fork_cb_list.insert(m_fork_cb_list.begin(), fork_cb);
-	fork_cb->m_forkable = this;
-}
-
-void GLForkable::removeForkCallback(GLForkCallback *fork_cb)
-{
-	ForkCbList::iterator it, end = m_fork_cb_list.end();
-	it = find(m_fork_cb_list.begin(), end, fork_cb);
-	if (it == end) {
-		cerr << "GLForkCallback not registered" << endl;
-		throw exception();
-	}
-	fork_cb->m_forkable = NULL;
-	m_fork_cb_list.erase(it);
-}
-
-void GLForkable::execInForked()
-{
-	ForkCbList::iterator it, end = m_fork_cb_list.end();
-	for (it = m_fork_cb_list.begin(); it != end; ++it)
-		(*it)->execInForked();
-}
-
-//-------------------------------------------------------------
 // ForkedSPSGLDisplay
 //-------------------------------------------------------------
 
@@ -421,7 +358,6 @@ void ForkedSPSGLDisplay::createWindow()
 
 		m_parent_pid = getppid();
 		signal(SIGINT, SIG_IGN);
-		execInForked();
 
 		runChild();
 	} else {

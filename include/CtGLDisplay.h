@@ -49,7 +49,7 @@ class CtGLDisplay
 };
 
 
-class CtSPSGLDisplay : public CtGLDisplay, public GLForkable
+class CtSPSGLDisplay : public CtGLDisplay
 {
  public:
 	CtSPSGLDisplay(lima::CtControl *ct_control,
@@ -74,20 +74,8 @@ class CtSPSGLDisplay : public CtGLDisplay, public GLForkable
 			     int autorange);
 
  private:
-	class ForkCallback : public GLForkCallback
-	{
-	public:
-		ForkCallback(CtSPSGLDisplay *gl_display);
-	protected:
-		virtual void execInForked();
-	private:
-		CtSPSGLDisplay *m_gl_display;
-	};
-	friend class ForkCallback;
-
 	SPSGLDisplayBase *m_sps_gl_display;
 	bool m_use_forked;
-	ForkCallback m_fork_cb;
 };
 
 #endif // __CTGLDISPLAY_H__
