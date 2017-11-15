@@ -48,7 +48,7 @@ QTINCLS		= -I$(QTINCLD) -I$(QTINCLD)/QtCore -I$(QTINCLD)/QtGui \
 		  -I$(QTINCLD)/QtOpenGL
 QTFLAGS		= -pipe -g -O2 -Wall -W -D_REENTRANT \
 		   $(QTINCLS) $(QTDEFINES)
-QTLDFLAGS	= -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL
+QTLDFLAGS	= -Wl,-O1 -L$(QTDIR)/lib -lQtCore -lQtGui -lQtOpenGL -lGL -lX11
 
 IMGFLAGS	= $(CPPFLAGS) $(CXXFLAGS) $(QTFLAGS)
 IMGLDFLAGS	= $(QTLDFLAGS)
