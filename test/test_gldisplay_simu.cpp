@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
 
 	bool alternate_test_image = false;
 
-	char *spec_name = "GLDisplayTest";
-	char *array_name = "Simulator";
+	const char *spec_name = "GLDisplayTest";
+	const char *array_name = "Simulator";
 
 	if ((argc > 1) && (string(argv[1]) == "--alternate-test"))
 		alternate_test_image = true;
