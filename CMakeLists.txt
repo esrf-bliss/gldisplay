@@ -51,7 +51,8 @@ target_link_libraries(gldisplay limacore)
 target_link_libraries(gldisplay ${GL_LIB})
 target_link_libraries(gldisplay ${X11_LIB})
 
-install(TARGETS gldisplay LIBRARY DESTINATION lib)
+include(GNUInstallDirs)
+install(TARGETS gldisplay LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(LIMA_ENABLE_PYTHON)
 	set(NAME "gldisplay")
