@@ -71,10 +71,6 @@
 extern "C" { void lima_import_array();}
 %End
 
-%UnitCode
-#include <lima_init_numpy.cpp>
-%End
-
 %PostInitialisationCode
 lima_import_array();
 %End
