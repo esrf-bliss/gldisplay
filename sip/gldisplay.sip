@@ -24,8 +24,6 @@
 
 %ModuleHeaderCode
 
-extern "C" { void gldisplay_import_array();}
-
 #define PYLIST_2_ARGC_ARGV_HEAD(ai, argc, argv, ok) \
 	int argc = PyList_Size(ai); \
 	char **argv = NULL; \
@@ -69,9 +67,14 @@ extern "C" { void gldisplay_import_array();}
 
 %End
 
-%PostInitialisationCode
-gldisplay_import_array();
+%ModuleHeaderCode
+extern "C" { void lima_import_array();}
 %End
+
+%PostInitialisationCode
+lima_import_array();
+%End
+
 
 class GLDisplay
 {
@@ -269,4 +272,4 @@ using namespace lima;
 
 };
 
-%Import ../../../sip/core/limacore_tmp.sip
+@IMPORTS@
